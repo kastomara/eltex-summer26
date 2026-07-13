@@ -1,0 +1,18 @@
+mkdir -p D1/D2/D3
+touch D1/D2/file.txt
+echo "Paladins are the most boring class in DnD" >> file.txt
+ln -s /D1/D2/file.txt palalink
+ln file.txt hardpalalink
+ls -li
+393307 -rw-r--r-- 2 eltex-v4 eltex-v4    42 Jul 10 00:31 hardpalalink
+393309 lrwxrwxrwx 1 eltex-v4 eltex-v4    15 Jul 10 00:37 palalink -> /D1/D2/file.txt
+
+mv D1/D2/file.txt D1/
+cat /home/eltex-v4/hardpalalink
+Hard link still working after file transfer because it connects to inode
+rm -rf D1/D2
+find / -type f -size +20M
+find ~ -type f -mtime -1
+which find
+file /usr/bin/find
+file /boot/initrd.img*
