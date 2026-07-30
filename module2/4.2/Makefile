@@ -19,7 +19,10 @@ UNITY_OBJ = $(UNITY_DIR)/unity.o
 TARGET = $(BIN_DIR)/app
 TEST_TARGET = $(BIN_DIR)/test_run
 
-all: $(TARGET)
+all: directories $(TARGET)
+
+directories:
+	mkdir -p $(BIN_DIR) 
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
@@ -38,6 +41,7 @@ $(UNITY_OBJ): $(UNITY_SRC)
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(TEST_OBJS) $(TEST_TARGET) $(UNITY_OBJ)
+	rm -rf $(BIN_DIR)
 
 run: $(TARGET)
 	./$(TARGET)

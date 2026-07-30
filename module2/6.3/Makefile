@@ -15,7 +15,10 @@ LIB_SRCS = $(LIB_DIR)/add.c $(LIB_DIR)/subtract.c $(LIB_DIR)/multiply.c $(LIB_DI
 LIB_EXT = dylib
 LIB_TARGET = $(LIB_SRCS:.c=.$(LIB_EXT))
 
-all: libs $(TARGET) 
+all: directories libs $(TARGET) 
+
+directories:
+	mkdir -p $(BIN_DIR) 
 
 libs: $(LIB_TARGET)
 
@@ -30,6 +33,7 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f $(LIB_TARGET) $(OBJS) $(TARGET)
+	rm -rf $(BIN_DIR)
 	@echo "Очищено"
 
 .PHONY: all clean run libs
