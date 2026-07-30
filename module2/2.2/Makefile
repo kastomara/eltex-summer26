@@ -20,7 +20,10 @@ APP_OBJS = $(SRC_DIR)/calc.o $(SRC_DIR)/main.o
 
 TEST_OBJS = $(SRC_DIR)/calc.o $(TEST_DIR)/test_calc.o $(UNITY_DIR)/unity.o
 
-all: $(TARGET)
+all: directories $(TARGET)
+
+directories:
+	mkdir -p $(BIN_DIR) 
 
 $(TARGET): $(APP_OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(APP_OBJS)
@@ -39,6 +42,7 @@ $(UNITY_DIR)/%.o: $(UNITY_DIR)/%.c
 
 clean:
 	rm -f $(SRC_DIR)/*.o $(TEST_DIR)/*.o $(UNITY_DIR)/*.o $(TARGET) $(TEST_TARGET)
+	rm -rf $(BIN_DIR)
 
 rebuild: clean all
 
