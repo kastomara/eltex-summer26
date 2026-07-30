@@ -1,19 +1,24 @@
 #ifndef CALC_H
 #define CALC_H
-#include <stddef.h>
+
+#include <sys/stat.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 typedef struct {
-    int numeric;
-    char binary[10];
-    char symbolic[256];
-} Umask;
+    mode_t mode;
+    char symbolic[11];
+    char octal[5];
+} FilePermissions;
 
-int num_bin (int umask, char *binary);
-void num_sym (int umask, char *symbolic, size_t size);
-int sym_num (const char* symbolic);
-int parse_umask(const char *input, Umask *result);
-void printUmask(const Umask *umask);
-int is_valid_umask(int umask);
-int get_permission_bits(char perm_char);
+void parse_symbolic(const char *input, mode_t *mode);
+void parse_octal(const char *input, mode_t *mode);
+void format_permissions(mode_t mode, FilePermissions *perms);
+void print_permissions(const FilePermissions *perms);
+int get_file_permissions(const char *filename, FilePermissions *perms);
+void modify_permissions(mode_t *mode, const char *command);
+int parse_permissions(const char *input, mode_t *mode);
 
 #endif

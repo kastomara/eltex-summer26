@@ -1,33 +1,45 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -Iunity -Isrc
 
-TARGET = app
-TEST_TARGET = test_run
-
 SRC_DIR = src
 TEST_DIR = tests
 UNITY_DIR = unity
+BIN_DIR = bin
 
-SRCS = $(SRC_DIR)/calc.c
-MAIN_SRC = $(SRC_DIR)/main.c
-TEST_SRC = $(TEST_DIR)/test_calc.c
-UNITY_SRC = $(UNITY_DIR)/unity.c
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/calc.c
+OBJS = $(SRCS:.c=.o)
 HEADERS = $(SRC_DIR)/calc.h
 
-APP_OBJS = $(SRC_DIR)/calc.o $(SRC_DIR)/main.o
+TEST_SRCS = $(TEST_DIR)/test_calc.c $(SRC_DIR)/calc.c
+TEST_OBJS = $(TEST_SRCS:.c=.o)
+TEST_HEADERS = $(SRC_DIR)/calc.h $(UNITY_DIR)/unity.h
+UNITY_SRC = $(UNITY_DIR)/unity.c
+UNITY_OBJ = $(UNITY_DIR)/unity.o
+
+TARGET = $(BIN_DIR)/app
+TEST_TARGET = $(BIN_DIR)/test_run
 
 all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS)
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TARGET): $(APP_OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(APP_OBJS)
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+$(TEST_TARGET): $(TEST_OBJS) $(UNITY_OBJ)
+	$(CC) $(CFLAGS) -o $(TEST_TARGET) $(TEST_OBJS) $(UNITY_OBJ)
+
+$(UNITY_OBJ): $(UNITY_SRC)
+	$(CC) $(CFLAGS) -c $(UNITY_SRC) -o $(UNITY_OBJ)
 
 clean:
-	rm -f $(APP_OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET) $(TEST_OBJS) $(TEST_TARGET) $(UNITY_OBJ)
 
 run: $(TARGET)
-	./$(TARGET) 192.168.1.0 /24 10
+	./$(TARGET)
 
-.PHONY: all clean run test
+.PHONY: all clean run 

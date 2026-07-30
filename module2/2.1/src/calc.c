@@ -22,13 +22,23 @@ void addContact(PhoneBook *pb) {
     
     printf("\n--- Add New Contact ---\n");
     
-    printf("Enter surname: ");
-    fgets(newContact->surname, MAX_NAME_LEN, stdin);
-    newContact->surname[strcspn(newContact->surname, "\n")] = '\0';
+    do {
+        printf("Enter surname (required): ");
+        fgets(newContact->surname, MAX_NAME_LEN, stdin);
+        newContact->surname[strcspn(newContact->surname, "\n")] = '\0';
+        if (strlen(newContact->surname) == 0) {
+            printf("Surname cannot be empty! Please try again.\n");
+        }
+    } while (strlen(newContact->surname) == 0);
     
-    printf("Enter first name: ");
-    fgets(newContact->firstName, MAX_NAME_LEN, stdin);
-    newContact->firstName[strcspn(newContact->firstName, "\n")] = '\0';
+    do {
+        printf("Enter first name (required): ");
+        fgets(newContact->firstName, MAX_NAME_LEN, stdin);
+        newContact->firstName[strcspn(newContact->firstName, "\n")] = '\0';
+        if (strlen(newContact->firstName) == 0) {
+            printf("First name cannot be empty! Please try again.\n");
+        }
+    } while (strlen(newContact->firstName) == 0);
     
     printf("Enter workplace (optional, press Enter to skip): ");
     fgets(newContact->workplace, MAX_WORK_LEN, stdin);
@@ -125,12 +135,20 @@ void editContact(PhoneBook *pb) {
     printf("Surname [%s]: ", c->surname);
     fgets(buffer, MAX_NAME_LEN, stdin);
     buffer[strcspn(buffer, "\n")] = '\0';
-    if (strlen(buffer) > 0) strcpy(c->surname, buffer);
+    if (strlen(buffer) > 0) {
+        strcpy(c->surname, buffer);
+    } else {
+        printf("Surname cannot be empty! Keeping current value.\n");
+    }
     
     printf("First name [%s]: ", c->firstName);
     fgets(buffer, MAX_NAME_LEN, stdin);
     buffer[strcspn(buffer, "\n")] = '\0';
-    if (strlen(buffer) > 0) strcpy(c->firstName, buffer);
+    if (strlen(buffer) > 0) {
+        strcpy(c->firstName, buffer);
+    } else {
+        printf("First name cannot be empty! Keeping current value.\n");
+    }
     
     printf("Workplace [%s]: ", c->workplace);
     fgets(buffer, MAX_WORK_LEN, stdin);

@@ -45,8 +45,8 @@ int main() {
             break;
         }
         
-        if (choice < 1 || choice > 6) {
-            printf("Ошибка: неверный выбор! Введите число от 0 до 6.\n");
+        if (choice < 1 || choice > ACT_COUNT) {
+            printf("Ошибка: неверный выбор! Введите число от 0 до %d.\n", ACT_COUNT);
             continue;
         }
 
@@ -66,13 +66,12 @@ int main() {
         
         while (getchar() != '\n');
         
-        char ops[] = {'+', '-', '*', '/', 'M', '^'};
-        char op_char = ops[choice - 1];
+        char op_char = actions[choice - 1].symb;
         
         result = execAct(op_char, num1, num2, &error);
         
         if (error) {
-            printf("Ошибка: деление на ноль!\n");
+            printf("Ошибка: неверно!\n");
         } else {
             printf("Результат: %.2lf %c %.2lf = %.2lf\n", 
                    num1, op_char, num2, result);

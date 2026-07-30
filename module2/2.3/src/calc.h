@@ -36,5 +36,7 @@ char* findName(char symb);
 double execAct(char symb, double a, double b, int* error);
 
 actionExp parseExp(const char* input);
+extern actionData actions[];
+extern const int ACT_COUNT;
 
 #endif

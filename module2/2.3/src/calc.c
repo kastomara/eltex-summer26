@@ -25,17 +25,17 @@ double power(double a, double b) {
     return pow(a, b);
 }
 
-static actionData actions[] = {
+actionData actions[] = {
     {'+', "Сложение", add},
     {'-', "Вычитание", substract},
     {'*', "Умножение", multiply},
     {'/', "Деление", divide},
     {'M', "Максимум", max},
-    {'^', "Степень", power}
+    {'^', "Степень", power},
+    {'%', "Целочисленное деление", divide}
+
 };
-
-#define ACT_COUNT (sizeof(actions) / sizeof(actions[0]))
-
+const int ACT_COUNT = sizeof(actions) / sizeof(actions[0]);
 action findAct(char symb) {
     for (size_t i = 0; i < ACT_COUNT; i++) {
         if (actions[i].symb == symb) {

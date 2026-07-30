@@ -1,159 +1,195 @@
 #include "calc.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
 
-int num_bin(int umask, char *binary) {
-    if (umask < 0 || umask > 0777) {
-        strcpy(binary, "Не пиши такое");
-        return -1;
+void parse_symbolic(const char *input, mode_t *mode) {
+    const char *str = input;
+
+    if (str[0] == '-' || str[0] == 'd') {
+        str++;
     }
 
-    for (int i = 8; i >= 0; i++) {
-        binary[8 - i] = (umask & (1 << i)) ? '1' : '0';
+    if (strlen(str) != 9) {
+        return;
     }
-    binary[9] = '\0';
-}
-int sym_num(const char *symbolic) {
-    int umask = 0;
-    char buffer[256];
-    strcpy(buffer, symbolic);
-    
-    char *token = strtok(buffer, ",");
-    while (token != NULL) {
-        while (isspace(*token)) token++;
-        
-        char who[4] = "";
-        char perms[4] = "";
-        char op = '=';
-        
-        if (sscanf(token, "%[ugo]=%[rwx-]", who, perms) == 2) {
-            op = '=';
-        } else if (sscanf(token, "%[ugo]+%[rwx-]", who, perms) == 2) {
-            op = '+';
-        } else if (sscanf(token, "%[ugo]-%[rwx-]", who, perms) == 2) {
-            op = '-';
-        } else if (sscanf(token, "a=%[rwx-]", perms) == 1) {
-            strcpy(who, "ugo");
-            op = '=';
-        } else if (sscanf(token, "a+%[rwx-]", perms) == 1) {
-            strcpy(who, "ugo");
-            op = '+';
-        } else if (sscanf(token, "a-%[rwx-]", perms) == 1) {
-            strcpy(who, "ugo");
-            op = '-';
-        } else {
-            return -1;
-        }
-        
-        int mask = 0;
-        for (int i = 0; who[i]; i++) {
-            switch (who[i]) {
-                case 'u': mask |= 0700; break;
-                case 'g': mask |= 0070; break;
-                case 'o': mask |= 0007; break;
-                case 'a': mask |= 0777; break;
-                default: return -1;
-            }
-        }
-        
-        int perm_bits = 0;
-        for (int i = 0; perms[i]; i++) {
-            switch (perms[i]) {
-                case 'r': perm_bits |= 4; break;
-                case 'w': perm_bits |= 2; break;
-                case 'x': perm_bits |= 1; break;
-                default: return -1;
-            }
-        }
-        
-        if (op == '=') {
-            umask &= ~mask;
-            for (int i = 0; i < 9; i += 3) {
-                if (mask & (7 << i)) {
-                    umask |= (perm_bits << i);
-                }
-            }
-        } else if (op == '+') {
-            for (int i = 0; i < 9; i += 3) {
-                if (mask & (7 << i)) {
-                    umask |= (perm_bits << i);
-                }
-            }
-        } else if (op == '-') {
-            for (int i = 0; i < 9; i += 3) {
-                if (mask & (7 << i)) {
-                    umask &= ~(perm_bits << i);
-                }
-            }
-        }
-        
-        token = strtok(NULL, ",");
-    }
-    
-    return umask;
+
+    if (str[0] == 'r') *mode |= S_IRUSR; else *mode &= ~S_IRUSR;
+    if (str[1] == 'w') *mode |= S_IWUSR; else *mode &= ~S_IWUSR;
+    if (str[2] == 'x') *mode |= S_IXUSR; else *mode &= ~S_IXUSR;
+
+    if (str[3] == 'r') *mode |= S_IRGRP; else *mode &= ~S_IRGRP;
+    if (str[4] == 'w') *mode |= S_IWGRP; else *mode &= ~S_IWGRP;
+    if (str[5] == 'x') *mode |= S_IXGRP; else *mode &= ~S_IXGRP;
+
+    if (str[6] == 'r') *mode |= S_IROTH; else *mode &= ~S_IROTH;
+    if (str[7] == 'w') *mode |= S_IWOTH; else *mode &= ~S_IWOTH;
+    if (str[8] == 'x') *mode |= S_IXOTH; else *mode &= ~S_IXOTH;
 }
 
-void num_sym(int umask, char *symbolic, size_t size) {
-    char parts[3][4] = {"---", "---", "---"};
-    
-    for (int group = 0; group < 3; group++) {
-        int bits = (umask >> ((2 - group) * 3)) & 7;
-        int idx = 0;
-        if (bits & 4) parts[group][idx++] = 'r';
-        if (bits & 2) parts[group][idx++] = 'w';
-        if (bits & 1) parts[group][idx++] = 'x';
-        parts[group][idx] = '\0';
-    }
-    
-    snprintf(symbolic, size, "u=%s,g=%s,o=%s", parts[0], parts[1], parts[2]);
-}
-
-int parse_umask(const char *input, Umask *result) {
-    if (!input || !result) return -1;
-    
+void parse_octal(const char *input, mode_t *mode) {
     char *endptr;
-    long val = strtol(input, &endptr, 8);
+    long value = strtol(input, &endptr, 8);
     
-    if (*endptr == '\0' && val >= 0 && val <= 0777) {
-        result->numeric = (int)val;
-        num_bin(result->numeric, result->binary);
-        num_sym(result->numeric, result->symbolic, sizeof(result->symbolic));
+    if (*endptr != '\0') {
+        return;
+    }
+    
+    if (value < 0 || value > 07777) {
+        return;
+    }
+    
+    *mode = (mode_t)value;
+}
+
+int parse_permissions(const char *input, mode_t *mode) {
+    int is_octal = 1;
+    for (int i = 0; input[i] != '\0'; i++) {
+        if (input[i] < '0' || input[i] > '7') {
+            is_octal = 0;
+            break;
+        }
+    }
+    
+    if (is_octal && strlen(input) >= 3 && strlen(input) <= 4) {
+        parse_octal(input, mode);
+        return 1;
+    } else {
+        parse_symbolic(input, mode);
         return 0;
     }
+}
+
+void format_permissions(mode_t mode, FilePermissions *perms) {
+    perms->mode = mode;
+
+    char sym[11];
+    sym[0] = S_ISDIR(mode) ? 'd' : '-';
+    sym[1] = (mode & S_IRUSR) ? 'r' : '-';
+    sym[2] = (mode & S_IWUSR) ? 'w' : '-';
     
-    int num = sym_num(input);
-    if (num == -1) return -1;
+    if (mode & S_ISUID) {
+        sym[3] = (mode & S_IXUSR) ? 's' : 'S';
+    } else {
+        sym[3] = (mode & S_IXUSR) ? 'x' : '-';
+    }
     
-    result->numeric = num;
-    num_bin(result->numeric, result->binary);
-    strcpy(result->symbolic, input);
+    sym[4] = (mode & S_IRGRP) ? 'r' : '-';
+    sym[5] = (mode & S_IWGRP) ? 'w' : '-';
+    
+    if (mode & S_ISGID) {
+        sym[6] = (mode & S_IXGRP) ? 's' : 'S';
+    } else {
+        sym[6] = (mode & S_IXGRP) ? 'x' : '-';
+    }
+    
+    sym[7] = (mode & S_IROTH) ? 'r' : '-';
+    sym[8] = (mode & S_IWOTH) ? 'w' : '-';
+
+    if (mode & S_ISVTX) {
+        sym[9] = (mode & S_IXOTH) ? 't' : 'T';
+    } else {
+        sym[9] = (mode & S_IXOTH) ? 'x' : '-';
+    }
+    
+    sym[10] = '\0';
+    strcpy(perms->symbolic, sym);
+
+    snprintf(perms->octal, sizeof(perms->octal), "%04o", mode & 07777);
+}
+
+int get_file_permissions(const char *filename, FilePermissions *perms) {
+    struct stat st;
+    
+    if (stat(filename, &st) != 0) {
+        return -1;
+    }
+    
+    format_permissions(st.st_mode, perms);
     return 0;
 }
 
-void print_umask(const Umask *umask) {
-    printf("\n=== РЕЗУЛЬТАТ КОНВЕРТАЦИИ ===\n");
-    printf("Числовой:  %03o\n", umask->numeric);
-    printf("Символьный: %s\n", umask->symbolic);
-    printf("Битовый:   %s\n", umask->binary);
-    printf("Группы:    %c%c%c %c%c%c %c%c%c\n",
-           umask->binary[0], umask->binary[1], umask->binary[2],
-           umask->binary[3], umask->binary[4], umask->binary[5],
-           umask->binary[6], umask->binary[7], umask->binary[8]);
-    printf("================================\n");
-}
+void modify_permissions(mode_t *mode, const char *command) {
+    if (strlen(command) < 2) {
+        return;
+    }
 
-// Вспомогательные функции для тестов
-int is_valid_umask(int umask) {
-    return umask >= 0 && umask <= 0777;
-}
+    char who[4] = {0};
+    char op[2] = {0};
+    char perms[4] = {0};
 
-int get_permission_bits(char perm_char) {
-    switch (perm_char) {
-        case 'r': return 4;
-        case 'w': return 2;
-        case 'x': return 1;
-        default: return 0;
+    int i = 0;
+    while (command[i] && command[i] != '+' && command[i] != '-' && command[i] != '=') {
+        if (i < 3) who[i] = command[i];
+        i++;
+    }
+    
+    if (command[i] == '+' || command[i] == '-' || command[i] == '=') {
+        op[0] = command[i];
+        i++;
+    } else {
+        return;
+    }
+    
+    int j = 0;
+    while (command[i] && j < 3) {
+        perms[j] = command[i];
+        i++;
+        j++;
+    }
+
+    int apply_user = 0, apply_group = 0, apply_other = 0;
+    if (strchr(who, 'u') || strchr(who, 'a')) apply_user = 1;
+    if (strchr(who, 'g') || strchr(who, 'a')) apply_group = 1;
+    if (strchr(who, 'o') || strchr(who, 'a')) apply_other = 1;
+
+    if (strlen(who) == 0) {
+        apply_user = apply_group = apply_other = 1;
+    }
+ 
+    mode_t r_bit = 0, w_bit = 0, x_bit = 0;
+    if (strchr(perms, 'r')) {
+        r_bit = S_IRUSR | S_IRGRP | S_IROTH;
+    }
+    if (strchr(perms, 'w')) {
+        w_bit = S_IWUSR | S_IWGRP | S_IWOTH;
+    }
+    if (strchr(perms, 'x')) {
+        x_bit = S_IXUSR | S_IXGRP | S_IXOTH;
+    }
+    
+    mode_t bits = 0;
+    if (apply_user) bits |= r_bit & (S_IRUSR | S_IWUSR | S_IXUSR);
+    if (apply_user) bits |= w_bit & (S_IRUSR | S_IWUSR | S_IXUSR);
+    if (apply_user) bits |= x_bit & (S_IRUSR | S_IWUSR | S_IXUSR);
+    
+    if (apply_group) bits |= r_bit & (S_IRGRP | S_IWGRP | S_IXGRP);
+    if (apply_group) bits |= w_bit & (S_IRGRP | S_IWGRP | S_IXGRP);
+    if (apply_group) bits |= x_bit & (S_IRGRP | S_IWGRP | S_IXGRP);
+    
+    if (apply_other) bits |= r_bit & (S_IROTH | S_IWOTH | S_IXOTH);
+    if (apply_other) bits |= w_bit & (S_IROTH | S_IWOTH | S_IXOTH);
+    if (apply_other) bits |= x_bit & (S_IROTH | S_IWOTH | S_IXOTH);
+
+    switch (op[0]) {
+        case '+':
+            *mode |= bits;
+            break;
+        case '-':
+            *mode &= ~bits;
+            break;
+        case '=':
+            if (apply_user) {
+                *mode &= ~(S_IRUSR | S_IWUSR | S_IXUSR);
+                *mode |= bits & (S_IRUSR | S_IWUSR | S_IXUSR);
+            }
+            if (apply_group) {
+                *mode &= ~(S_IRGRP | S_IWGRP | S_IXGRP);
+                *mode |= bits & (S_IRGRP | S_IWGRP | S_IXGRP);
+            }
+            if (apply_other) {
+                *mode &= ~(S_IROTH | S_IWOTH | S_IXOTH);
+                *mode |= bits & (S_IROTH | S_IWOTH | S_IXOTH);
+            }
+            break;
+        default:
+            break;
     }
 }

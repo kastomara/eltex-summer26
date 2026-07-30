@@ -1,193 +1,319 @@
 #include "unity.h"
 #include "calc.h"
 #include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdlib.h>
 
-// Настройка перед каждым тестом
+static const char *TEST_FILE = "test_file_001";
+static const char *TEST_FILE2 = "test_file_002";
+static const char *TEST_DIR = "test_dir_001";
+
+void cleanup_test_files(void) {
+    unlink(TEST_FILE);
+    unlink(TEST_FILE2);
+    rmdir(TEST_DIR);
+}
+
 void setUp(void) {
-    // Инициализация перед каждым тестом
+    cleanup_test_files();
 }
 
-// Очистка после каждого теста
 void tearDown(void) {
-    // Очистка после каждого теста
+    cleanup_test_files();
 }
 
-// === ТЕСТЫ ДЛЯ numeric_to_binary ===
-void test_numeric_to_binary_valid(void) {
-    char binary[10];
-    
-    TEST_ASSERT_EQUAL_INT(0, numeric_to_binary(0755, binary));
-    TEST_ASSERT_EQUAL_STRING("111101101", binary);
-    
-    TEST_ASSERT_EQUAL_INT(0, numeric_to_binary(0644, binary));
-    TEST_ASSERT_EQUAL_STRING("110100100", binary);
-    
-    TEST_ASSERT_EQUAL_INT(0, numeric_to_binary(0000, binary));
-    TEST_ASSERT_EQUAL_STRING("000000000", binary);
-    
-    TEST_ASSERT_EQUAL_INT(0, numeric_to_binary(0777, binary));
-    TEST_ASSERT_EQUAL_STRING("111111111", binary);
+void test_parse_symbolic_standard(void) {
+    mode_t mode = 0;
+    parse_symbolic("rwxr-xr-x", &mode);
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRGRP);
+    TEST_ASSERT_FALSE(mode & S_IWGRP);
+    TEST_ASSERT_TRUE(mode & S_IXGRP);
+    TEST_ASSERT_TRUE(mode & S_IROTH);
+    TEST_ASSERT_FALSE(mode & S_IWOTH);
+    TEST_ASSERT_TRUE(mode & S_IXOTH);
 }
 
-void test_numeric_to_binary_invalid(void) {
-    char binary[10];
-    
-    TEST_ASSERT_EQUAL_INT(-1, numeric_to_binary(-1, binary));
-    TEST_ASSERT_EQUAL_STRING("Ошибка", binary);
-    
-    TEST_ASSERT_EQUAL_INT(-1, numeric_to_binary(1000, binary));
-    TEST_ASSERT_EQUAL_STRING("Ошибка", binary);
+void test_parse_symbolic_with_dash(void) {
+    mode_t mode = 0;
+    parse_symbolic("-rwxr-xr-x", &mode);
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRGRP);
+    TEST_ASSERT_FALSE(mode & S_IWGRP);
 }
 
-// === ТЕСТЫ ДЛЯ symbolic_to_numeric ===
-void test_symbolic_to_numeric_basic(void) {
-    TEST_ASSERT_EQUAL_INT(0755, symbolic_to_numeric("u=rwx,g=rx,o=rx"));
-    TEST_ASSERT_EQUAL_INT(0644, symbolic_to_numeric("u=rw,g=r,o=r"));
-    TEST_ASSERT_EQUAL_INT(0000, symbolic_to_numeric("u=,g=,o="));
-    TEST_ASSERT_EQUAL_INT(0777, symbolic_to_numeric("u=rwx,g=rwx,o=rwx"));
+void test_parse_symbolic_with_d(void) {
+    mode_t mode = 0;
+    parse_symbolic("drwxr-xr-x", &mode);
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRGRP);
+    TEST_ASSERT_FALSE(mode & S_IWGRP);
 }
 
-void test_symbolic_to_numeric_with_a(void) {
-    TEST_ASSERT_EQUAL_INT(0755, symbolic_to_numeric("a=rx,u=w"));
-    TEST_ASSERT_EQUAL_INT(0777, symbolic_to_numeric("a=rwx"));
-    TEST_ASSERT_EQUAL_INT(0000, symbolic_to_numeric("a="));
+void test_parse_octal_755(void) {
+    mode_t mode = 0;
+    parse_octal("755", &mode);
+    TEST_ASSERT_EQUAL_INT(0755, mode & 07777);
 }
 
-void test_symbolic_to_numeric_operations(void) {
-    // Начинаем с базовых прав
-    int base = symbolic_to_numeric("u=rwx,g=rx,o=r");
-    TEST_ASSERT_EQUAL_INT(0754, base);
-    
-    // Тестируем сложение
-    TEST_ASSERT_EQUAL_INT(0755, symbolic_to_numeric("u=rwx,g=rx,o=r,o+x"));
-    TEST_ASSERT_EQUAL_INT(0777, symbolic_to_numeric("u=rwx,g=rx,o=r,g+w,o+wx"));
-    
-    // Тестируем вычитание
-    TEST_ASSERT_EQUAL_INT(0700, symbolic_to_numeric("u=rwx,g=rx,o=r,g-rx,o-r"));
-    TEST_ASSERT_EQUAL_INT(0000, symbolic_to_numeric("u=rwx,g=rx,o=r,u-rwx,g-rx,o-r"));
+void test_parse_octal_644(void) {
+    mode_t mode = 0;
+    parse_octal("644", &mode);
+    TEST_ASSERT_EQUAL_INT(0644, mode & 07777);
 }
 
-void test_symbolic_to_numeric_invalid(void) {
-    TEST_ASSERT_EQUAL_INT(-1, symbolic_to_numeric("invalid"));
-    TEST_ASSERT_EQUAL_INT(-1, symbolic_to_numeric("u=rwx,g=rx,o=invalid"));
-    TEST_ASSERT_EQUAL_INT(-1, symbolic_to_numeric("x=rwx"));
-    TEST_ASSERT_EQUAL_INT(-1, symbolic_to_numeric("u=rwx;g=rx"));
+void test_parse_octal_with_leading_zero(void) {
+    mode_t mode = 0;
+    parse_octal("0755", &mode);
+    TEST_ASSERT_EQUAL_INT(0755, mode & 07777);
 }
 
-// === ТЕСТЫ ДЛЯ numeric_to_symbolic ===
-void test_numeric_to_symbolic(void) {
-    char symbolic[256];
-    
-    numeric_to_symbolic(0755, symbolic, sizeof(symbolic));
-    TEST_ASSERT_EQUAL_STRING("u=rwx,g=rx,o=rx", symbolic);
-    
-    numeric_to_symbolic(0644, symbolic, sizeof(symbolic));
-    TEST_ASSERT_EQUAL_STRING("u=rw,g=r,o=r", symbolic);
-    
-    numeric_to_symbolic(0000, symbolic, sizeof(symbolic));
-    TEST_ASSERT_EQUAL_STRING("u=,g=,o=", symbolic);
-    
-    numeric_to_symbolic(0777, symbolic, sizeof(symbolic));
-    TEST_ASSERT_EQUAL_STRING("u=rwx,g=rwx,o=rwx", symbolic);
+void test_parse_octal_invalid(void) {
+    mode_t mode = 0;
+    parse_octal("999", &mode);
+    TEST_ASSERT_EQUAL_INT(0, mode & 07777);
 }
 
-// === ТЕСТЫ ДЛЯ parse_umask ===
-void test_parse_numeric_umask(void) {
-    Umask result;
-    
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("755", &result));
-    TEST_ASSERT_EQUAL_INT(0755, result.numeric);
-    TEST_ASSERT_EQUAL_STRING("111101101", result.binary);
-    TEST_ASSERT_EQUAL_STRING("u=rwx,g=rx,o=rx", result.symbolic);
-    
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("644", &result));
-    TEST_ASSERT_EQUAL_INT(0644, result.numeric);
-    TEST_ASSERT_EQUAL_STRING("110100100", result.binary);
+void test_parse_permissions_octal_detect(void) {
+    mode_t mode = 0;
+    int result = parse_permissions("755", &mode);
+    TEST_ASSERT_EQUAL_INT(1, result);
+    TEST_ASSERT_EQUAL_INT(0755, mode & 07777);
 }
 
-void test_parse_symbolic_umask(void) {
-    Umask result;
-    
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("u=rwx,g=rx,o=r", &result));
-    TEST_ASSERT_EQUAL_INT(0754, result.numeric);
-    TEST_ASSERT_EQUAL_STRING("u=rwx,g=rx,o=r", result.symbolic);
-    
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("a=rwx", &result));
-    TEST_ASSERT_EQUAL_INT(0777, result.numeric);
+void test_parse_permissions_symbolic_detect(void) {
+    mode_t mode = 0;
+    int result = parse_permissions("rwxr-xr-x", &mode);
+    TEST_ASSERT_EQUAL_INT(0, result);
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
 }
 
-void test_parse_invalid_umask(void) {
-    Umask result;
-    
-    TEST_ASSERT_EQUAL_INT(-1, parse_umask("invalid", &result));
-    TEST_ASSERT_EQUAL_INT(-1, parse_umask("", &result));
-    TEST_ASSERT_EQUAL_INT(-1, parse_umask(NULL, &result));
-    TEST_ASSERT_EQUAL_INT(-1, parse_umask("999", &result)); // > 777
+void test_format_permissions_755(void) {
+    FilePermissions perms;
+    mode_t mode = 0755;
+    format_permissions(mode, &perms);
+    TEST_ASSERT_EQUAL_STRING("-rwxr-xr-x", perms.symbolic);
+    TEST_ASSERT_EQUAL_STRING("0755", perms.octal);
 }
 
-// === ТЕСТЫ ДЛЯ ВСПОМОГАТЕЛЬНЫХ ФУНКЦИЙ ===
-void test_is_valid_umask(void) {
-    TEST_ASSERT_TRUE(is_valid_umask(0000));
-    TEST_ASSERT_TRUE(is_valid_umask(0755));
-    TEST_ASSERT_TRUE(is_valid_umask(0777));
-    TEST_ASSERT_FALSE(is_valid_umask(-1));
-    TEST_ASSERT_FALSE(is_valid_umask(1000));
+void test_format_permissions_644(void) {
+    FilePermissions perms;
+    mode_t mode = 0644;
+    format_permissions(mode, &perms);
+    TEST_ASSERT_EQUAL_STRING("-rw-r--r--", perms.symbolic);
+    TEST_ASSERT_EQUAL_STRING("0644", perms.octal);
 }
 
-void test_get_permission_bits(void) {
-    TEST_ASSERT_EQUAL_INT(4, get_permission_bits('r'));
-    TEST_ASSERT_EQUAL_INT(2, get_permission_bits('w'));
-    TEST_ASSERT_EQUAL_INT(1, get_permission_bits('x'));
-    TEST_ASSERT_EQUAL_INT(0, get_permission_bits('z'));
+void test_format_permissions_directory(void) {
+    FilePermissions perms;
+    mode_t mode = S_IFDIR | 0755;
+    format_permissions(mode, &perms);
+    TEST_ASSERT_EQUAL('d', perms.symbolic[0]);
 }
 
-// === ТЕСТЫ КРАЙНИХ СЛУЧАЕВ ===
-void test_edge_cases(void) {
-    Umask result;
+void test_get_file_permissions_existing(void) {
+    FilePermissions perms;
+    system("touch test_file_001");
+    system("chmod 755 test_file_001");
     
-    // Минимальное значение
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("0", &result));
-    TEST_ASSERT_EQUAL_INT(0000, result.numeric);
-    TEST_ASSERT_EQUAL_STRING("000000000", result.binary);
-    
-    // Максимальное значение
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("777", &result));
-    TEST_ASSERT_EQUAL_INT(0777, result.numeric);
-    TEST_ASSERT_EQUAL_STRING("111111111", result.binary);
-    
-    // Сложная комбинация
-    TEST_ASSERT_EQUAL_INT(0, parse_umask("u=rwx,g=,o=x", &result));
-    TEST_ASSERT_EQUAL_INT(0701, result.numeric);
+    int result = get_file_permissions("test_file_001", &perms);
+    TEST_ASSERT_EQUAL_INT(0, result);
+    TEST_ASSERT_EQUAL_STRING("-rwxr-xr-x", perms.symbolic);
+    TEST_ASSERT_EQUAL_STRING("0755", perms.octal);
 }
 
-// === ЗАПУСК ВСЕХ ТЕСТОВ ===
+void test_get_file_permissions_nonexistent(void) {
+    FilePermissions perms;
+    int result = get_file_permissions("/nonexistent_file_12345", &perms);
+    TEST_ASSERT_EQUAL_INT(-1, result);
+}
+
+void test_modify_permissions_add_u_x(void) {
+    mode_t mode = 0644;
+    modify_permissions(&mode, "u+x");
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+}
+
+void test_modify_permissions_add_g_w(void) {
+    mode_t mode = 0755;
+    modify_permissions(&mode, "g+w");
+    TEST_ASSERT_TRUE(mode & S_IWGRP);
+}
+
+void test_modify_permissions_remove_go_w(void) {
+    mode_t mode = 0777;
+    modify_permissions(&mode, "go-w");
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRGRP);
+    TEST_ASSERT_FALSE(mode & S_IWGRP);
+    TEST_ASSERT_TRUE(mode & S_IXGRP);
+    TEST_ASSERT_TRUE(mode & S_IROTH);
+    TEST_ASSERT_FALSE(mode & S_IWOTH);
+    TEST_ASSERT_TRUE(mode & S_IXOTH);
+}
+
+void test_modify_permissions_set_a_rw(void) {
+    mode_t mode = 0755;
+    modify_permissions(&mode, "a=rw");
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+    TEST_ASSERT_FALSE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRGRP);
+    TEST_ASSERT_TRUE(mode & S_IWGRP);
+    TEST_ASSERT_FALSE(mode & S_IXGRP);
+    TEST_ASSERT_TRUE(mode & S_IROTH);
+    TEST_ASSERT_TRUE(mode & S_IWOTH);
+    TEST_ASSERT_FALSE(mode & S_IXOTH);
+}
+
+void test_modify_permissions_no_who(void) {
+    mode_t mode = 0644;
+    modify_permissions(&mode, "+x");
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IXGRP);
+    TEST_ASSERT_TRUE(mode & S_IXOTH);
+}
+
+void test_file_creation_and_chmod_755(void) {
+    FilePermissions perms;
+    mode_t expected_mode = 0755;
+    char cmd[256];
+    
+    system("touch test_file_001");
+    snprintf(cmd, sizeof(cmd), "chmod %o test_file_001", expected_mode);
+    system(cmd);
+    
+    get_file_permissions("test_file_001", &perms);
+    TEST_ASSERT_EQUAL_INT(expected_mode, perms.mode & 07777);
+    TEST_ASSERT_EQUAL_STRING("-rwxr-xr-x", perms.symbolic);
+    TEST_ASSERT_EQUAL_STRING("0755", perms.octal);
+}
+
+void test_directory_creation_and_chmod(void) {
+    FilePermissions perms;
+    mode_t expected_mode = 0755;
+    char cmd[256];
+    
+    mkdir("test_dir_001", 0755);
+    
+    struct stat st;
+    stat("test_dir_001", &st);
+    TEST_ASSERT_TRUE(S_ISDIR(st.st_mode));
+    
+    snprintf(cmd, sizeof(cmd), "chmod %o test_dir_001", expected_mode);
+    system(cmd);
+    
+    get_file_permissions("test_dir_001", &perms);
+    TEST_ASSERT_EQUAL_INT(expected_mode, perms.mode & 07777);
+    TEST_ASSERT_EQUAL_STRING("drwxr-xr-x", perms.symbolic);
+    TEST_ASSERT_EQUAL_STRING("0755", perms.octal);
+    TEST_ASSERT_EQUAL('d', perms.symbolic[0]);
+    TEST_ASSERT_TRUE(S_ISDIR(perms.mode));
+}
+
+void test_modify_and_apply_to_file(void) {
+    FilePermissions perms;
+    mode_t initial_mode = 0644;
+    char cmd[256];
+    
+    system("touch test_file_001");
+    snprintf(cmd, sizeof(cmd), "chmod %o test_file_001", initial_mode);
+    system(cmd);
+    
+    get_file_permissions("test_file_001", &perms);
+    mode_t mode = perms.mode;
+    
+    modify_permissions(&mode, "u+x");
+    TEST_ASSERT_TRUE(mode & S_IXUSR);
+    TEST_ASSERT_TRUE(mode & S_IRUSR);
+    TEST_ASSERT_TRUE(mode & S_IWUSR);
+    
+    snprintf(cmd, sizeof(cmd), "chmod %o test_file_001", mode & 07777);
+    system(cmd);
+    
+    get_file_permissions("test_file_001", &perms);
+    TEST_ASSERT_TRUE(perms.mode & S_IXUSR);
+    TEST_ASSERT_EQUAL_STRING("-rwxr--r--", perms.symbolic);
+}
+
+void test_special_bits_setuid(void) {
+    FilePermissions perms;
+    
+    system("touch test_file_001");
+    system("chmod 4755 test_file_001");
+    
+    get_file_permissions("test_file_001", &perms);
+    TEST_ASSERT_TRUE(perms.mode & S_ISUID);
+    // Проверяем, что бит setuid установлен (символ 's' в позиции выполнения для владельца)
+    TEST_ASSERT_EQUAL('s', perms.symbolic[3]);
+    TEST_ASSERT_EQUAL_STRING("4755", perms.octal);
+}
+
+void test_special_bits_sticky(void) {
+    FilePermissions perms;
+    
+    system("touch test_file_001");
+    system("chmod 1777 test_file_001");
+    
+    get_file_permissions("test_file_001", &perms);
+    TEST_ASSERT_TRUE(perms.mode & S_ISVTX);
+    // Проверяем, что sticky бит установлен (символ 't' в позиции выполнения для других)
+    TEST_ASSERT_EQUAL('t', perms.symbolic[9]);
+    TEST_ASSERT_EQUAL_STRING("1777", perms.octal);
+}
+
+void test_special_bits_setgid(void) {
+    FilePermissions perms;
+    
+    system("touch test_file_001");
+    system("chmod 2755 test_file_001");
+    
+    get_file_permissions("test_file_001", &perms);
+    TEST_ASSERT_TRUE(perms.mode & S_ISGID);
+    // Проверяем, что бит setgid установлен (символ 's' в позиции выполнения для группы)
+    TEST_ASSERT_EQUAL('s', perms.symbolic[6]);
+    TEST_ASSERT_EQUAL_STRING("2755", perms.octal);
+}
+
 int main(void) {
     UNITY_BEGIN();
-    
-    // Тесты для numeric_to_binary
-    RUN_TEST(test_numeric_to_binary_valid);
-    RUN_TEST(test_numeric_to_binary_invalid);
-    
-    // Тесты для symbolic_to_numeric
-    RUN_TEST(test_symbolic_to_numeric_basic);
-    RUN_TEST(test_symbolic_to_numeric_with_a);
-    RUN_TEST(test_symbolic_to_numeric_operations);
-    RUN_TEST(test_symbolic_to_numeric_invalid);
-    
-    // Тесты для numeric_to_symbolic
-    RUN_TEST(test_numeric_to_symbolic);
-    
-    // Тесты для parse_umask
-    RUN_TEST(test_parse_numeric_umask);
-    RUN_TEST(test_parse_symbolic_umask);
-    RUN_TEST(test_parse_invalid_umask);
-    
-    // Тесты для вспомогательных функций
-    RUN_TEST(test_is_valid_umask);
-    RUN_TEST(test_get_permission_bits);
-    
-    // Тесты крайних случаев
-    RUN_TEST(test_edge_cases);
+
+    RUN_TEST(test_parse_symbolic_standard);
+    RUN_TEST(test_parse_symbolic_with_dash);
+    RUN_TEST(test_parse_symbolic_with_d);
+    RUN_TEST(test_parse_octal_755);
+    RUN_TEST(test_parse_octal_644);
+    RUN_TEST(test_parse_octal_with_leading_zero);
+    RUN_TEST(test_parse_octal_invalid);
+    RUN_TEST(test_parse_permissions_octal_detect);
+    RUN_TEST(test_parse_permissions_symbolic_detect);
+    RUN_TEST(test_format_permissions_755);
+    RUN_TEST(test_format_permissions_644);
+    RUN_TEST(test_format_permissions_directory);
+    RUN_TEST(test_get_file_permissions_existing);
+    RUN_TEST(test_get_file_permissions_nonexistent);
+    RUN_TEST(test_modify_permissions_add_u_x);
+    RUN_TEST(test_modify_permissions_add_g_w);
+    RUN_TEST(test_modify_permissions_remove_go_w);
+    RUN_TEST(test_modify_permissions_set_a_rw);
+    RUN_TEST(test_modify_permissions_no_who);
+    RUN_TEST(test_file_creation_and_chmod_755);
+    RUN_TEST(test_directory_creation_and_chmod);
+    RUN_TEST(test_modify_and_apply_to_file);
+    RUN_TEST(test_special_bits_setuid);
+    RUN_TEST(test_special_bits_sticky);
+    RUN_TEST(test_special_bits_setgid);
     
     return UNITY_END();
 }
