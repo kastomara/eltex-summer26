@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
         if (msgid == -1) {
             printf("Broker: message queue already exists, exiting...\n");
             exit(1);
-        }
+        }   
         
         printf("Broker: message queue created with ID %d\n", msgid);
         
@@ -49,7 +49,10 @@ int main(int argc, char *argv[]) {
             
             if (strcmp(command, "subscribe") == 0) {
                 if (add_subscriber(&state, sender_pid, topic) == 0) {
-                    printf("Broker: subscriber %d subscribed to topic '%s'\n", sender_pid, topic);
+                    if (topic == -1) {
+                        printf("Broker: topic '%s' do not exists\n", sender_pid, topic);
+                    }
+                    else printf("Broker: subscriber %d subscribed to topic '%s'\n", sender_pid, topic);
                 }
             } 
             else if (strcmp(command, "unsubscribe") == 0) {

@@ -1,6 +1,6 @@
 #ifndef COPY_H
 #define COPY_H
-
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,12 +12,12 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
-
+ 
 #define BUFFER_SIZE 4096
 #define MAX_FILENAME 256
 #define PIPE_NAME "my_pipe"
 #define TIMEOUT_SEC 5
-
+ 
 typedef enum {
     MSG_FILE_INFO = 1,
     MSG_FILE_DATA = 2,
@@ -26,7 +26,7 @@ typedef enum {
     MSG_ERROR = 5,
     MSG_TERMINATE = 6
 } MessageType;
-
+ 
 typedef struct {
     MessageType type;
     char filename[MAX_FILENAME];
@@ -34,7 +34,7 @@ typedef struct {
     size_t data_size;
     char data[BUFFER_SIZE];
 } Message;
-
+ 
 void parent_process(int data_pipe, int ack_pipe, char **filenames, int file_count);
 void child_process(int data_pipe, int ack_pipe);
 int send_message(int fd, const Message *msg);
@@ -45,5 +45,5 @@ void write_message(const char *msg);
 void write_error(const char *msg);
 void write_number(long long num);
 void print_usage(const char *progname);
-
-#endif
+ 
+#endif  

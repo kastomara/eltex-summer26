@@ -1,11 +1,11 @@
 #include "copy.h"
-
+ 
 void print_usage(const char *progname) {
     write_message("Usage: ");
     write_message(progname);
     write_message(" [-p pipe_name] file1 [file2 ...]\n");
 }
-
+ 
 int main(int argc, char *argv[]) {
     int data_pipe[2];
     int ack_pipe[2];
@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
     int data_fd, ack_fd;
     int status;
     
+    signal(SIGPIPE, SIG_IGN);
+ 
     if (argc < 2) {
         print_usage(argv[0]);
         exit(EXIT_FAILURE);

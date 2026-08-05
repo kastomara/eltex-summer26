@@ -51,7 +51,7 @@ int get_message_queue(key_t key);
 void remove_message_queue(int msgid);
 int send_message(int msgid, long mtype, const char* text);
 int receive_message(int msgid, long mtype, char* buffer, size_t buf_size);
-
+    
 void init_broker_state(BrokerState* state);
 int add_subscriber(BrokerState* state, pid_t pid, const char* topic);
 int remove_subscriber(BrokerState* state, pid_t pid, const char* topic);
