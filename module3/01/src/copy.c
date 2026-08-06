@@ -311,10 +311,6 @@ void parent_process(int data_pipe, int ack_pipe, char **filenames, int file_coun
             write_error("[Parent] Error: file '");
             write_error(filename);
             write_error("' does not exist\n");
-            /* The child was never told about this file, so it is not
-             * expecting anything for it — simply skip to the next file
-             * instead of pushing a message into the pipe that would
-             * desynchronize the parent/child protocol. */
             continue;
         }
         
