@@ -1,0 +1,244 @@
+root@eltex-practice2-v4:~# git config --global user.name "kastomara"
+root@eltex-practice2-v4:~# git config --global user.email "yandex.rout.ru@gmail.com"
+root@eltex-practice2-v4:~# git config --global init.defaultBranch main
+
+root@eltex-practice2-v4:~# apt install git gh
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+git is already the newest version (1:2.43.0-1ubuntu7.3).
+git set to manually installed.
+The following NEW packages will be installed:
+  gh
+0 upgraded, 1 newly installed, 0 to remove and 81 not upgraded.
+Need to get 8,836 kB of archives.
+After this operation, 45.4 MB of additional disk space will be used.
+Do you want to continue? [Y/n] Y
+...
+Setting up gh (2.45.0-1ubuntu0.3) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+
+root@eltex-practice2-v4:~# ssh-keygen -t ed25519 -f ~/.ssh/kastomara
+Generating public/private ed25519 key pair.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /root/.ssh/kastomara
+Your public key has been saved in /root/.ssh/kastomara.pub
+The key fingerprint is:
+SHA256:6sVUiz+2+L4AFgvF+jCeveMsvFZAHDzLFyKlSdBtCN8 root@eltex-practice2-v4
+The key's randomart image is:
++--[ED25519 256]--+
+|o+.*oo.          |
+| o++O.o          |
+|  +=E=..  .      |
+|    B..o o .     |
+|   . O+ S .      |
+|    o.+= .       |
+|   . ...+ +      |
+|    +oo. + o     |
+|   ..++..o=.     |
++----[SHA256]-----+
+
+root@eltex-practice2-v4:~# gh auth login
+? What account do you want to log into? GitHub.com
+? What is your preferred protocol for Git operations on this host? SSH
+? Upload your SSH public key to your GitHub account? /root/.ssh/kastomara.pub
+? Title for your SSH key: eltex-practice2-pgX-vY
+? How would you like to authenticate GitHub CLI? Login with a web browser
+! First copy your one-time code: D189-02E1
+Press Enter to open github.com in your browser...
+! Failed opening a web browser at https://github.com/login/device
+  exec: "xdg-open,x-www-browser,www-browser,wslview": executable file not found in $PATH
+  Please try entering the URL in your browser manually
+✓ Authentication complete.
+- gh config set -h github.com git_protocol ssh
+✓ Configured git protocol
+! Authentication credentials saved in plain text
+✓ Uploaded the SSH key to your GitHub account: /root/.ssh/kastomara.pub
+✓ Logged in as kastomara
+
+root@eltex-practice2-v4:~# gh auth setup-git --hostname github.com
+root@eltex-practice2-v4:~# gh auth status
+github.com
+  ✓ Logged in to github.com account kastomara (/root/.config/gh/hosts.yml)
+  - Active account: true
+  - Git operations protocol: ssh
+  - Token: gho_************************************
+  - Token scopes: 'admin:public_key', 'gist', 'read:org', 'repo'
+
+root@eltex-practice2-v4:~# gh repo create --public eltex-summer26
+✓ Created repository kastomara/eltex-summer26 on GitHub
+  https://github.com/kastomara/eltex-summer26
+
+root@eltex-practice2-v4:~# mkdir ~/eltex-summer26 && cd ~/eltex-summer26
+root@eltex-practice2-v4:~/eltex-summer26# echo "# краткое_описание_репозитория" >> README.md
+root@eltex-practice2-v4:~/eltex-summer26# git init
+Initialized empty Git repository in /root/eltex-summer26/.git/
+root@eltex-practice2-v4:~/eltex-summer26# git add README.md
+root@eltex-practice2-v4:~/eltex-summer26# git commit -m "first comment"
+[main (root-commit) cf34e2d] first comment
+ 1 file changed, 1 insertion(+)
+ create mode 100644 README.md
+root@eltex-practice2-v4:~/eltex-summer26# git branch -M main
+root@eltex-practice2-v4:~/eltex-summer26# git remote add origin https://github.com/kastomara/eltex-summer26.git
+root@eltex-practice2-v4:~/eltex-summer26# git status
+On branch main
+nothing to commit, working tree clean
+root@eltex-practice2-v4:~/eltex-summer26# git push -u origin main
+Enumerating objects: 3, done.
+Counting objects: 100% (3/3), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (2/2), done.
+Writing objects: 100% (3/3), 269 bytes | 269.00 KiB/s, done.
+Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+To https://github.com/kastomara/eltex-summer26.git
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+
+root@eltex-practice2-v4:~/eltex-summer26# mkdir -p module1/task1
+root@eltex-practice2-v4:~/eltex-summer26# mkdir -p module1/task2
+root@eltex-practice2-v4:~/eltex-summer26# mkdir -p module1/task3
+
+root@eltex-practice2-v4:~/eltex-summer26# cd ~/eltex-summer26/module1/task1
+root@eltex-practice2-v4:~/eltex-summer26/module1/task1# scp eltex-v4@217.71.138.1:/home/eltex-v4/eltex-v4_part1.pdf .
+kex_exchange_identification: read: Connection reset by peer
+Connection reset by 217.71.138.1 port 22
+scp: Connection closed
+
+root@eltex-practice2-v4:~# scp eltex-v4@217.71.138.1:/home/eltex-v4/eltex-v4_part2.log ~/eltex-summer26/module1/task2/
+ssh: connect to host 217.71.138.1 port 22: Connection timed out
+scp: Connection closed
+
+root@eltex-practice2-v4:~# scp eltex-v4@217.71.138.1:/home/eltex-v4/eltex-v4_part3.log ~/eltex-summer26/module1/task3/
+ssh: connect to host 217.71.138.1 port 22: Connection timed out
+scp: Connection closed
+
+root@eltex-practice2-v4:~# scp eltex-v4@217.71.138.1:/home/eltex-v4/eltex-v4_part3_gt20M.log ~/eltex-summer26/module1/task3/
+ssh: connect to host 217.71.138.1 port 22: Connection timed out
+scp: Connection closed
+
+root@eltex-practice2-v4:~/eltex-summer26# git add .
+root@eltex-practice2-v4:~/eltex-summer26# git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        new file:   module1/task1/eltex-v4_part1.pdf
+        new file:   module1/task2/eltex-v4_part2.log
+        new file:   module1/task3/eltex-v4_part3.log
+        new file:   module1/task3/eltex-v4_part3_gt20M.log
+
+root@eltex-practice2-v4:~/eltex-summer26# git commit -m "Первый модуль добавлен"
+[main 768d3dd] Первый модуль добавлен
+ 4 files changed, 239 insertions(+)
+ create mode 100644 module1/task1/eltex-v4_part1.pdf
+ create mode 100644 module1/task2/eltex-v4_part2.log
+ create mode 100644 module1/task3/eltex-v4_part3.log
+ create mode 100644 module1/task3/eltex-v4_part3_gt20M.log
+
+root@eltex-practice2-v4:~/eltex-summer26# git push
+Enumerating objects: 11, done.
+Counting objects: 100% (11/11), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (8/8), done.
+Writing objects: 100% (10/10), 419.93 KiB | 34.99 MiB/s, done.
+Total 10 (delta 0), reused 0 (delta 0), pack-reused 0
+To https://github.com/kastomara/eltex-summer26.git
+   cf34e2d..768d3dd  main -> main
+
+root@eltex-practice2-v4:~# mkdir ~/eltex-sum26-clone && cd ~/eltex-sum26-clone
+root@eltex-practice2-v4:~/eltex-sum26-clone# git clone https://github.com/kastomara/eltex-summer26.git
+Cloning into 'eltex-summer26'...
+remote: Enumerating objects: 13, done.
+remote: Counting objects: 100% (13/13), done.
+remote: Compressing objects: 100% (10/10), done.
+remote: Total 13 (delta 0), reused 13 (delta 0), pack-reused 0 (from 0)
+Receiving objects: 100% (13/13), 420.16 KiB | 2.25 MiB/s, done.
+
+root@eltex-practice2-v4:~/eltex-sum26-clone# ls
+eltex-summer26
+
+root@eltex-practice2-v4:~/eltex-summer26# mv module1/task2/eltex-v4_part2.log module1/task1/
+root@eltex-practice2-v4:~/eltex-summer26# mv module1/task3/eltex-v4_part3.log module1/task1/
+root@eltex-practice2-v4:~/eltex-summer26# mv module1/task3/eltex-v4_part3_gt20M.log module1/task1/
+root@eltex-practice2-v4:~/eltex-summer26# git add -A
+root@eltex-practice2-v4:~/eltex-summer26# git status
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        renamed:    module1/task2/eltex-v4_part2.log -> module1/task1/eltex-v4_part2.log
+        renamed:    module1/task3/eltex-v4_part3.log -> module1/task1/eltex-v4_part3.log
+        renamed:    module1/task3/eltex-v4_part3_gt20M.log -> module1/task1/eltex-v4_part3_gt20M.log
+
+root@eltex-practice2-v4:~/eltex-summer26# git commit -m "Переместил файлы с помощью mv и git add -A"
+[main 3ca77f3] Переместил файлы с помощью mv и git add -A
+ 3 files changed, 0 insertions(+), 0 deletions(-)
+ rename module1/{task2 => task1}/eltex-v4_part2.log (100%)
+ rename module1/{task3 => task1}/eltex-v4_part3.log (100%)
+ rename module1/{task3 => task1}/eltex-v4_part3_gt20M.log (100%)
+
+root@eltex-practice2-v4:~/eltex-summer26# git push
+Enumerating objects: 10, done.
+Counting objects: 100% (10/10), done.
+Delta compression using up to 2 threads
+Compressing objects: 100% (6/6), done.
+Writing objects: 100% (7/7), 2.45 KiB | 2.46 MiB/s, done.
+Total 7 (delta 0), reused 0 (delta 0), pack-reused 0
+To https://github.com/kastomara/eltex-summer26.git
+   768d3dd..3ca77f3  main -> main
+
+root@eltex-practice2-v4:~/eltex-sum26-clone/eltex-summer26# git fetch
+remote: Enumerating objects: 10, done.
+remote: Counting objects: 100% (10/10), done.
+remote: Compressing objects: 100% (6/6), done.
+remote: Total 7 (delta 0), reused 7 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (7/7), 2.44 KiB | 2.44 MiB/s, done.
+From https://github.com/kastomara/eltex-summer26
+   768d3dd..3ca77f3  main       -> origin/main
+
+root@eltex-practice2-v4:~/eltex-sum26-clone/eltex-summer26# git log origin/main
+commit 3ca77f37c6aabe39d8a401fb4dfade5f21148cf9 (origin/main, origin/HEAD)
+Author: kastomara <yandex.rout.ru@gmail.com>
+Date:   Mon Jul 13 16:53:22 2026 +0000
+
+    Переместил файлы с помощью mv и git add -A
+
+commit 768d3dd9a9a4f383877f455261d95f154383bb3c (HEAD -> main)
+Author: kastomara <yandex.rout.ru@gmail.com>
+Date:   Mon Jul 13 16:28:19 2026 +0000
+
+    Первый модуль добавлен
+
+commit cf34e2d2ab7c2f5260f76ddf463deb48a696be52
+Author: kastomara <yandex.rout.ru@gmail.com>
+Date:   Mon Jul 13 05:52:03 2026 +0000
+
+    first comment
+
+root@eltex-practice2-v4:~/eltex-sum26-clone/eltex-summer26# git diff main origin/main
+diff --git a/module1/task2/eltex-v4_part2.log b/module1/task1/eltex-v4_part2.log
+similarity index 100%
+rename from module1/task2/eltex-v4_part2.log
+rename to module1/task1/eltex-v4_part2.log
+diff --git a/module1/task3/eltex-v4_part3.log b/module1/task1/eltex-v4_part3.log
+similarity index 100%
+rename from module1/task3/eltex-v4_part3.log
+rename to module1/task1/eltex-v4_part3.log
+diff --git a/module1/task3/eltex-v4_part3_gt20M.log b/module1/task1/eltex-v4_part3_gt20M.log
+similarity index 100%
+rename from module1/task3/eltex-v4_part3_gt20M.log
+rename to module1/task1/eltex-v4_part3_gt20M.log
+
+root@eltex-practice2-v4:~/eltex-sum26-clone/eltex-summer26# git merge
+Updating 768d3dd..3ca77f3
+Fast-forward
+ module1/{task2 => task1}/eltex-v4_part2.log       | 0
+ module1/{task3 => task1}/eltex-v4_part3.log       | 0
+ module1/{task3 => task1}/eltex-v4_part3_gt20M.log | 0
+ 3 files changed, 0 insertions(+), 0 deletions(-)
+ rename module1/{task2 => task1}/eltex-v4_part2.log (100%)
+ rename module1/{task3 => task1}/eltex-v4_part3.log (100%)
+ rename module1/{task3 => task1}/eltex-v4_part3_gt20M.log (100%)

@@ -1,7 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+<<<<<<< HEAD
 #include "ipgen.h"
+=======
+#include "calc.h"
+>>>>>>> a2f58e574dc0213e328b25463792a31c11913793
 
 void clear_input_buffer() {
     int c;

@@ -1,0 +1,222 @@
+eltex-v4@eltex-2026-summer:~$ ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/eltex-v4/.ssh/id_rsa): pract2_2
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in pract2_2
+Your public key has been saved in pract2_2.pub
+The key fingerprint is:
+SHA256:x9FGJZRy7eoYSNdh4Vm9lUYrQhEEK+uEmJpshhUoXqs eltex-v4@eltex-2026-summer
+
+eltex-v4@eltex-2026-summer:~$ ssh-copy-id root@172.16.9.178
+/usr/bin/ssh-copy-id: INFO: Source of key(s) to be installed: "/home/eltex-v4/.ssh/id_rsa.pub"
+/usr/bin/ssh-copy-id: INFO: attempting to log in with the new key(s), to filter out any that are already installed
+/usr/bin/ssh-copy-id: WARNING: All keys were skipped because they already exist on the remote system.
+
+eltex-v4@eltex-2026-summer:~$ ssh root@172.16.9.178
+Welcome to Ubuntu 24.04.2 LTS (GNU/Linux 6.8.0-55-generic x86_64)
+
+root@eltex-practice2-v4:~# cat ~/.ssh/authorized_keys
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC0TwVltcn0ZXrXVu0KEq3v4AkLYbtBzX2nDhRbvEk1U40agU6grOtIqxAHh6Tc3Kv/hGBCZyA+RFiElNz2dh7zy6K0bbRWxqFDHnViYaWkCFf6y24J2DHPcLwLwXw6cnjQpwWIPZhfvSWFzKcSKsmculr/z0jav2zL2TXoRdqA/xYQF2S4rmYPkUnq4bwv6B4DeYwbNuHAzNeUwvFJs1BD3DknfI2U8A1o5iUaeMM0buLr3rP4Q0iG2oeDyXbGWoo8c7EOsLTP1DbJGjFyt3nZUEmIGqJNWGFq9jDV0fExPTuoBbp6uoF57X1PQAqMiKS8EUlmcFuam364CFJu1fNsnQFWu5NlAudbFTcb5RaUWvYqAqAPnNlKi0oUIE8XGaCfvxKCIFYR1zd6HiuwFkrnzcTeULnfwRCS177VpeJ1jk8m5crDrdUM7hoRAMEU6ZL6ShnHLwrLHUJ9U/fhIhHCmrLqk+C4WyYPhsidzKlYn4bRldZUGdcmmz7RPbx8ljc= eltex-v4@eltex-2026-summer
+
+root@eltex-practice2-v4:~# ls -la ~/.ssh/
+total 12
+drwx------ 2 root root 4096 Mar 12  2025 .
+drwx------ 4 root root 4096 Jul  8 05:33 ..
+-rw------- 1 root root  580 Jul  8 05:13 authorized_keys
+
+root@eltex-practice2-v4:~# useradd -m -s /bin/bash user1
+root@eltex-practice2-v4:~# passwd user1
+New password: 
+Retype new password: 
+passwd: password updated successfully
+
+root@eltex-practice2-v4:~# adduser user2
+info: Adding user `user2' ...
+info: Selecting UID/GID from range 1000 to 59999 ...
+info: Adding new group `user2' (1002) ...
+info: Adding new user `user2' (1002) with group `user2 (1002)' ...
+info: Creating home directory `/home/user2' ...
+info: Copying files from `/etc/skel' ...
+New password: 
+Retype new password: 
+passwd: password updated successfully
+Changing the user information for user2
+Enter the new value, or press ENTER for the default
+        Full Name []: 
+        Room Number []: 
+        Work Phone []: 
+        Home Phone []: 
+        Other []: 
+Is the information correct? [Y/n] Y
+
+root@eltex-practice2-v4:~# adduser user3
+info: Adding user `user3' ...
+info: Selecting UID/GID from range 1000 to 59999 ...
+info: Adding new group `user3' (1003) ...
+info: Adding new user `user3' (1003) with group `user3 (1003)' ...
+info: Creating home directory `/home/user3' ...
+info: Copying files from `/etc/skel' ...
+New password: 
+Retype new password: 
+passwd: password updated successfully
+Changing the user information for user3
+Enter the new value, or press ENTER for the default
+        Full Name []: 
+        Room Number []: 
+        Work Phone []: 
+        Home Phone []: 
+        Other []: 
+Is the information correct? [Y/n] Y
+
+root@eltex-practice2-v4:~# usermod -s /usr/sbin/nologin user3
+root@eltex-practice2-v4:~# su - user3
+This account is currently not available.
+root@eltex-practice2-v4:~# su -s /bin/bash user3
+user3@eltex-practice2-v4:/root$ exit
+exit
+
+root@eltex-practice2-v4:~# groupadd rangers
+root@eltex-practice2-v4:~# for u in user{1..3}; do usermod -aG rangers "$u"; done
+root@eltex-practice2-v4:~# getent group rangers
+rangers:x:1004:user1,user2,user3
+
+root@eltex-practice2-v4:~# mkdir /opt/share
+root@eltex-practice2-v4:~# chown :rangers /opt/share
+root@eltex-practice2-v4:~# chmod 2770 /opt/share
+root@eltex-practice2-v4:~# ls -ld /opt/share
+drwxrws--- 2 root rangers 4096 Jul 10 05:21 /opt/share
+
+root@eltex-practice2-v4:~# echo "umask 0007" >> /home/user1/.bashrc
+root@eltex-practice2-v4:~# su - user1
+user1@eltex-practice2-v4:~$ umask
+0007
+user1@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# su - user1
+user1@eltex-practice2-v4:~$ touch /opt/share/user1_file.txt
+user1@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# su - user2
+user2@eltex-practice2-v4:~$ touch /opt/share/user2_file.txt
+user2@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# su - user3
+user3@eltex-practice2-v4:~$ touch /opt/share/user3_file.txt
+user3@eltex-practice2-v4:~$ rm /opt/share/user1_file.txt
+user3@eltex-practice2-v4:~$ rm /opt/share/user2_file.txt
+user3@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# chmod +t /opt/share
+root@eltex-practice2-v4:~# su - user1
+user1@eltex-practice2-v4:~$ touch /opt/share/user1_file.txt
+user1@eltex-practice2-v4:~$ touch /opt/share/user2_file.txt
+user1@eltex-practice2-v4:~$ touch /opt/share/user3_file.txt
+user1@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# su - user2
+user2@eltex-practice2-v4:~$ rm /opt/share/user1_file.txt
+rm: cannot remove '/opt/share/user1_file.txt': Operation not permitted
+user2@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# visudo
+
+root@eltex-practice2-v4:~# nano /usr/local/bin/dmesg.sh
+
+root@eltex-practice2-v4:~# chown root:root /usr/local/bin/dmesg.sh
+root@eltex-practice2-v4:~# chmod 4755 /usr/local/bin/dmesg.sh
+root@eltex-practice2-v4:~# ls -l /usr/local/bin/dmesg.sh
+-rwsr-xr-x 1 root root 34 Jul 10 05:35 /usr/local/bin/dmesg.sh
+
+root@eltex-practice2-v4:~# su - user1
+user1@eltex-practice2-v4:~$ sudo dmesg | head -n 5
+[    0.000000] Linux version 6.8.0-134-generic ...
+[    0.000000] Command line: BOOT_IMAGE=/vmlinuz-6.8.0-134-generic ...
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+user1@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# su - user2
+user2@eltex-practice2-v4:~$ /usr/local/bin/dmesg.sh | head -n 5
+[    0.000000] Linux version 6.8.0-134-generic ...
+[    0.000000] Command line: BOOT_IMAGE=/vmlinuz-6.8.0-134-generic ...
+[    0.000000] KERNEL supported cpus:
+[    0.000000]   Intel GenuineIntel
+[    0.000000]   AMD AuthenticAMD
+user2@eltex-practice2-v4:~$ exit
+logout
+
+root@eltex-practice2-v4:~# for u in $(compgen -u user\?); do chage -M 10 "$u"; done
+
+root@eltex-practice2-v4:~# echo "Astanin Artem" | tee /etc/motd
+Astanin Artem
+
+root@eltex-practice2-v4:~# rsync -av /etc/ /root/etc_backup/
+sending incremental file list
+created directory /root/etc_backup
+etc/
+etc/.pwd.lock
+etc/.resolv.conf.systemd-resolved.bak
+...
+sent 2,420,614 bytes  received 19,286 bytes  1,626,600.00 bytes/sec
+total size is 2,337,110  speedup is 0.96
+
+root@eltex-practice2-v4:~# tar -czf /root/etc_backup.tar.gz -C /root etc_backup
+root@eltex-practice2-v4:~# apt install bzip2 -y
+root@eltex-practice2-v4:~# tar -cjf /root/etc_backup.tar.bz2 -C /root etc_backup
+root@eltex-practice2-v4:~# apt install p7zip-full -y
+root@eltex-practice2-v4:~# 7z a /root/etc_backup.7z /root/etc_backup/
+...
+Archive size: 8284938 bytes (8091 KiB)
+
+root@eltex-practice2-v4:~# ls -lh /root/etc_backup.tar.* /root/etc_backup.7z
+-rw-r--r-- 1 root root 8.0M Jul 12 16:56 /root/etc_backup.7z
+-rw-r--r-- 1 root root 1.1M Jul 12 16:53 /root/etc_backup.tar.bz2
+-rw-r--r-- 1 root root 1.1M Jul 12 16:53 /root/etc_backup.tar.gz
+
+root@eltex-practice2-v4:~# echo "$(date)" | tee -a /etc/motd
+Mon Jul 13 05:26:37 PM UTC 2026
+root@eltex-practice2-v4:~# rsync -av /etc/ /root/etc_backup/
+sending incremental file list
+./
+motd
+sent 66,685 bytes  received 282 bytes  133,934.00 bytes/sec
+total size is 2,337,142  speedup is 34.90
+
+root@eltex-practice2-v4:~# tar -czf /root/etc_backup_motd.tar.gz -C /root etc_backup
+
+root@eltex-practice2-v4:~# diff <(tar -tjf /root/etc_backup.tar.bz2 | sort) <(find /root/etc_backup -type f | sort)
+0a1,1721
+> /root/etc_backup/adduser.conf
+> /root/etc_backup/alternatives/README
+...
+
+root@eltex-practice2-v4:~# mkdir /root/etc_backup_gzip /root/etc_backup_7zip
+root@eltex-practice2-v4:~# tar -xzf /root/etc_backup.tar.gz -C /root/etc_backup_gzip
+root@eltex-practice2-v4:~# 7z x /root/etc_backup.7z -o/root/etc_backup_7zip
+...
+Everything is Ok
+Folders: 488
+Files: 2930
+Size:       82095668
+Compressed: 8284938
+
+root@eltex-practice2-v4:~# diff /root/etc_backup_gzip/etc_backup/motd /root/etc_backup_7zip/etc_backup/motd
+1c1,2
+< Sun Jul 12 04:59:08 PM UTC 2026
+---
+> Astanin Artem
+> Mon Jul 13 05:26:37 PM UTC 2026
+
+root@eltex-practice2-v4:~# exit
+logout
+Connection to 172.16.9.178 closed.
+eltex-v4@eltex-2026-summer:~$ exit

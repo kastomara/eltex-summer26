@@ -1,0 +1,192 @@
+Script started on 2026-07-07 12:46:11+07:00 [COMMAND="bash --noediting" TERM="screen" TTY="/dev/pts/80" COLUMNS="80" LINES="24"]
+eltex-v4@eltex-2026-summer:~$ compgen -c | grep ^ls
+ls
+lsblk
+lsattr
+lscpu
+lsipc
+lsmod
+lsmem
+lspci
+lsinitramfs
+lsns
+lsusb
+lsof
+ls
+lslogins
+lsfd
+lslocks
+lsb_release
+lsirq
+lsblk
+lsattr
+lscpu
+lsipc
+lsmod
+lsmem
+lspci
+lsinitramfs
+lsns
+lsusb
+lsof
+ls
+lslogins
+lsfd
+lslocks
+lsb_release
+lsirq
+eltex-v4@eltex-2026-summer:~$ compgen -v | grep ^HIST
+HISTCMD
+HISTCONTROL
+HISTFILE
+HISTFILESIZE
+HISTSIZE
+eltex-v4@eltex-2026-summer:~$ echo $HISTFILESIZE
+2000
+eltex-v4@eltex-2026-summer:~$ ls -a ~ | grep "^\." 
+.
+..
+.bash_history
+.bash_logout
+.bashrc
+.config
+.profile
+.viminfo
+eltex-v4@eltex-2026-summer:~$ export HISTTIME="%F %T "
+eltex-v4@eltex-2026-summer:~$ history 3
+   47  ls -a ~ | grep "^\."
+   48  export HISTTIME="%F %T "
+   49  history 3
+eltex-v4@eltex-2026-summer:~$ export HISTTIMEFORMAT="%F %T "  
+eltex-v4@eltex-2026-summer:~$ history 3
+   49  2026-07-07 12:53:52 history 3
+   50  2026-07-07 12:54:44 export HISTTIMEFORMAT="%F %T "
+   51  2026-07-07 12:54:49 history 3
+eltex-v4@eltex-2026-summer:~$ date
+Tue Jul  7 12:56:24 PM +07 2026
+eltex-v4@eltex-2026-summer:~$ history | grep date
+   52  2026-07-07 12:56:24 date
+   53  2026-07-07 12:56:47 history | grep date
+eltex-v4@eltex-2026-summer:~$ export PROMPT_COMMAND='history -a'
+eltex-v4@eltex-2026-summer:~$ echo $PROMPT_COMMAND
+history -a
+eltex-v4@eltex-2026-summer:~$ echo 'export PROMPT_COMMAN="history -a"' >> ~/.bashrc
+eltex-v4@eltex-2026-summer:~$ echo 'export HISTTIMEFORMAT="%F %T"' >> ~/.bashrc
+eltex-v4@eltex-2026-summer:~$ whoami
+eltex-v4
+eltex-v4@eltex-2026-summer:~$ history | grep whoami
+   58  2026-07-07 13:01:54 whoami
+   59  2026-07-07 13:02:12 history | grep whoami
+eltex-v4@eltex-2026-summer:~$ DATE=$(date +%Y-%m-%d)
+eltex-v4@eltex-2026-summer:~$ echo $DATE
+2026-07-07
+eltex-v4@eltex-2026-summer:~$ TIME=$(date +%H-%M-%S)
+eltex-v4@eltex-2026-summer:~$ echo $TIME
+13-04-55
+eltex-v4@eltex-2026-summer:~$ DATE_TIME="$DATE $TIME"
+eltex-v4@eltex-2026-summer:~$ echo $DATE_TIME
+2026-07-07 13-04-55
+eltex-v4@eltex-2026-summer:~$ ls -1 /bin /sbin 2>/dev/null | grep '[0-9]' | sort -u
+addr2line
+b2sum
+base32
+base64
+bunzip2
+bzip2
+bzip2recover
+c89
+c89-gcc
+c99
+c99-gcc
+cpan5.36-x86_64-linux-gnu
+cpp-12
+diff3
+dumpe2fs
+e2freefrag
+e2fsck
+e2image
+e2label
+e2mmpstatus
+e2scrub
+e2scrub_all
+e2undo
+e4crypt
+e4defrag
+enc2xs
+fsck.ext2
+fsck.ext3
+fsck.ext4
+gcc-12
+gcc-ar-12
+gcc-nm-12
+gcc-ranlib-12
+gcov-12
+gcov-dump-12
+gcov-tool-12
+grub-menulst2cfg
+grub-mkpasswd-pbkdf2
+grub-syslinux2cfg
+h2ph
+h2xs
+i386
+killall5
+linux32
+linux64
+lto-dump-12
+md5sum
+md5sum.textutils
+mke2fs
+mkfs.ext2
+mkfs.ext3
+mkfs.ext4
+pdb3
+pdb3.11
+perl5.36.0
+perl5.36-x86_64-linux-gnu
+ping4
+ping6
+pl2pm
+pod2html
+pod2man
+pod2text
+pod2usage
+py3clean
+py3compile
+py3versions
+pydoc3
+pydoc3.11
+pygettext3
+pygettext3.11
+python3
+python3.11
+resize2fs
+sha1sum
+sha224sum
+sha256sum
+sha384sum
+sha512sum
+ssh-argv0
+systemd-id128
+traceroute6
+traceroute6.db
+tune2fs
+update-grub2
+x86_64
+x86_64-linux-gnu-addr2line
+x86_64-linux-gnu-ar
+x86_64-linux-gnu-as
+x86_64-linux-gnu-c++filt
+x86_64-linux-gnu-cpp
+x86_64-linux-gnu-cpp-12
+x86_64-linux-gnu-dwp
+x86_64-linux-gnu-elfedit
+x86_64-linux-gnu-gcc
+x86_64-linux-gnu-gcc-12
+x86_64-linux-gnu-gcc-ar
+x86_64-linux-gnu-gcc-ar-12
+x86_64-linux-gnu-gcc-nm
+x86_64-linux-gnu-gcc-nm-12
+x86_64-linux-gnu-gcc-ranlib
+x86_64-linux-gnu-gcc-ranlib-12
+x86_64-linux-gnu-gcov
+

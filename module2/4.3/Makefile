@@ -6,6 +6,7 @@ TEST_DIR = tests
 UNITY_DIR = unity
 BIN_DIR = bin
 
+<<<<<<< HEAD
 SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/pb_tree.c
 OBJS = $(SRCS:.c=.o)
 HEADERS = $(SRC_DIR)/pb_tree.h
@@ -13,6 +14,15 @@ HEADERS = $(SRC_DIR)/pb_tree.h
 TEST_SRCS = $(TEST_DIR)/test_pb_tree.c $(SRC_DIR)/pb_tree.c
 TEST_OBJS = $(TEST_SRCS:.c=.o)
 TEST_HEADERS = $(SRC_DIR)/pb_tree.h $(UNITY_DIR)/unity.h
+=======
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/calc.c
+OBJS = $(SRCS:.c=.o)
+HEADERS = $(SRC_DIR)/calc.h
+
+TEST_SRCS = $(TEST_DIR)/test_calc.c $(SRC_DIR)/calc.c
+TEST_OBJS = $(TEST_SRCS:.c=.o)
+TEST_HEADERS = $(SRC_DIR)/calc.h $(UNITY_DIR)/unity.h
+>>>>>>> a2f58e574dc0213e328b25463792a31c11913793
 UNITY_SRC = $(UNITY_DIR)/unity.c
 UNITY_OBJ = $(UNITY_DIR)/unity.o
 

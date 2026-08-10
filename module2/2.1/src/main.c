@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #include "phonebook.h"
+=======
+#include "calc.h"
+>>>>>>> a2f58e574dc0213e328b25463792a31c11913793
 #include <stdio.h>
 #include <stdlib.h>
 
