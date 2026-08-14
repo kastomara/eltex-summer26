@@ -1,4 +1,4 @@
-#include "process.h"
+#include "processPX.h"
 
 shared_memory_t *global_shm = NULL;
 volatile sig_atomic_t shutdown_requested = 0;
@@ -44,7 +44,7 @@ void producer_function(shared_memory_t *shm) {
             break;
         }
         
-        semaphore_wait(shm->semid);
+        semaphore_wait(shm->sem);
         
         data_block_t *block = (data_block_t*)((char*)shm->shmaddr + current_offset);
         int generated = generate_data_block(block, count);
@@ -57,7 +57,7 @@ void producer_function(shared_memory_t *shm) {
         block_count++;
         total_numbers += generated;
         
-        semaphore_signal(shm->semid);
+        semaphore_signal(shm->sem);
         
         printf("[PRODUCER] Блок #%d: %d чисел, смещение=%d\n", 
                block_count, generated, current_offset);
@@ -65,7 +65,7 @@ void producer_function(shared_memory_t *shm) {
         usleep((rand() % 500000) + 100000);
     }
     
-    semaphore_signal(shm->semid);
+    semaphore_wait(shm->sem);
     
     if (last_block_offset >= 0) {
         mark_last_block(shm, last_block_offset);
@@ -75,7 +75,7 @@ void producer_function(shared_memory_t *shm) {
     int *producer_done = (int*)shm->shmaddr;
     *producer_done = 1;
     
-    semaphore_signal(shm->semid);
+    semaphore_signal(shm->sem);
     
     printf("[PRODUCER] Завершение работы. Всего блоков: %d, чисел: %d\n", 
            block_count, total_numbers);
@@ -99,7 +99,7 @@ void consumer_function(shared_memory_t *shm, int id) {
             break;
         }
         
-        semaphore_wait(shm->semid);
+        semaphore_wait(shm->sem);
         
         data_block_t *block = NULL;
         int offset = 0;
@@ -117,7 +117,7 @@ void consumer_function(shared_memory_t *shm, int id) {
             processed_blocks++;
             idle_cycles = 0;
             
-            semaphore_signal(shm->semid);
+            semaphore_signal(shm->sem);
             
             int sleep_time = (rand() % MAX_WAIT_TIME) + 1;
             printf("[CONSUMER #%d] Обработано блоков: %d, засыпает на %d сек\n", 
@@ -125,12 +125,12 @@ void consumer_function(shared_memory_t *shm, int id) {
             sleep(sleep_time);
         } else {
             int producer_finished = *((int*)shm->shmaddr);
-            semaphore_signal(shm->semid);
+            semaphore_signal(shm->sem);
             
             if (producer_finished) {
-                semaphore_wait(shm->semid);
+                semaphore_wait(shm->sem);
                 int has_data = has_unprocessed_blocks(shm);
-                semaphore_signal(shm->semid);
+                semaphore_signal(shm->sem);
                 
                 if (!has_data) {
                     printf("[CONSUMER #%d] Производитель завершен, все блоки обработаны\n", id);
@@ -143,10 +143,10 @@ void consumer_function(shared_memory_t *shm, int id) {
                    id, idle_cycles);
             
             if (idle_cycles >= max_idle_cycles) {
-                semaphore_wait(shm->semid);
+                semaphore_wait(shm->sem);
                 int final_check = has_unprocessed_blocks(shm);
                 int prod_finished = *((int*)shm->shmaddr);
-                semaphore_signal(shm->semid);
+                semaphore_signal(shm->sem);
                 
                 if (prod_finished && !final_check) {
                     printf("[CONSUMER #%d] Завершаю работу (превышено время ожидания)\n", id);
@@ -190,8 +190,8 @@ int main(int argc, char *argv[]) {
     int *producer_done = (int*)global_shm->shmaddr;
     *producer_done = 0;
     
-    printf("[MAIN] Создана разделяемая память: shmid=%d, semid=%d\n", 
-           global_shm->shmid, global_shm->semid);
+    printf("[MAIN] Создана разделяемая память: %s\n", SHM_NAME);
+    printf("[MAIN] Создан семафор: %s\n", global_shm->sem_name);
     printf("[MAIN] Адрес памяти: %p\n", global_shm->shmaddr);
     
     pid_t producer_pid = fork();

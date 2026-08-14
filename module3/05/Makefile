@@ -4,9 +4,9 @@ CFLAGS = -Wall -Wextra -std=c11 -Iunity -Isrc
 SRC_DIR = src
 BIN_DIR = bin
 
-SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/process.c
+SRCS = $(SRC_DIR)/main.c $(SRC_DIR)/processPX.c
 OBJS = $(SRCS:.c=.o)
-HEADERS = $(SRC_DIR)/process.h
+HEADERS = $(SRC_DIR)/processPX.h
 
 TARGET = $(BIN_DIR)/app
 

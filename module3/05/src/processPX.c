@@ -1,7 +1,4 @@
-#include "process.h"
-
-static int created_shmid = -1;
-static int created_semid = -1;
+#include "processPX.h"
 
 int get_actual_count(data_block_t *block) {
     if (!block) return 0;
@@ -14,32 +11,20 @@ int is_last_block(data_block_t *block) {
 }
 
 void cleanup_shared_resources() {
-    printf("[CLEANUP] Поиск и очистка старых ресурсов...\n");
+    printf("[CLEANUP] Очистка старых POSIX ресурсов...\n");
     
-    int shmid = shmget(SHM_KEY, 0, 0);
-    if (shmid != -1) {
-        struct shmid_ds shm_info;
-        if (shmctl(shmid, IPC_STAT, &shm_info) != -1) {
-            printf("[CLEANUP] Найдена старая разделяемая память (shmid=%d), удаляю...\n", shmid);
-            shmctl(shmid, IPC_RMID, NULL);
-        }
+    int shm_fd = shm_open(SHM_NAME, O_RDWR, 0);
+    if (shm_fd != -1) {
+        close(shm_fd);
+        shm_unlink(SHM_NAME);
+        printf("[CLEANUP] Удалена разделяемая память: %s\n", SHM_NAME);
     }
     
-    int semid = semget(SEM_KEY, 0, 0);
-    if (semid != -1) {
-        printf("[CLEANUP] Найден старый семафор (semid=%d), удаляю...\n", semid);
-        semctl(semid, 0, IPC_RMID);
-    }
-    
-    printf("[CLEANUP] Очистка всех семафоров текущего пользователя...\n");
-    for (int i = 0; i < 256; i++) {
-        int test_semid = semget(IPC_PRIVATE + i, 0, 0);
-        if (test_semid != -1) {
-            struct semid_ds sem_info;
-            if (semctl(test_semid, 0, IPC_STAT, &sem_info) != -1) {
-                semctl(test_semid, 0, IPC_RMID);
-            }
-        }
+    sem_t *sem = sem_open(SEM_NAME, 0);
+    if (sem != SEM_FAILED) {
+        sem_close(sem);
+        sem_unlink(SEM_NAME);
+        printf("[CLEANUP] Удален семафор: %s\n", SEM_NAME);
     }
     
     printf("[CLEANUP] Очистка завершена\n");
@@ -50,58 +35,54 @@ shared_memory_t* create_shared_memory() {
     
     shared_memory_t *shm = malloc(sizeof(shared_memory_t));
     if (!shm) {
+        perror("malloc");
         return NULL;
     }
     
-    shm->shmid = shmget(SHM_KEY, SHM_SIZE, IPC_CREAT | IPC_EXCL | 0666);
-    if (shm->shmid == -1) {
-        shm->shmid = shmget(SHM_KEY, SHM_SIZE, IPC_CREAT | 0666);
-        if (shm->shmid == -1) {
-            perror("shmget");
+    shm->shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR | O_EXCL, 0666);
+    if (shm->shm_fd == -1) {
+        shm->shm_fd = shm_open(SHM_NAME, O_CREAT | O_RDWR, 0666);
+        if (shm->shm_fd == -1) {
+            perror("shm_open");
             free(shm);
             return NULL;
         }
-        printf("[SHM] Использована существующая разделяемая память (shmid=%d)\n", shm->shmid);
+        printf("[SHM] Использована существующая разделяемая память\n");
     } else {
-        printf("[SHM] Создана новая разделяемая память (shmid=%d)\n", shm->shmid);
+        printf("[SHM] Создана новая разделяемая память\n");
     }
-    
-    created_shmid = shm->shmid;
-    
-    shm->shmaddr = shmat(shm->shmid, NULL, 0);
-    if (shm->shmaddr == (void*)-1) {
-        perror("shmat");
-        shmctl(shm->shmid, IPC_RMID, NULL);
+        if (ftruncate(shm->shm_fd, SHM_SIZE) == -1) {
+        perror("ftruncate");
+        close(shm->shm_fd);
+        shm_unlink(SHM_NAME);
         free(shm);
         return NULL;
     }
+        shm->shmaddr = mmap(NULL, SHM_SIZE, PROT_READ | PROT_WRITE, 
+                        MAP_SHARED, shm->shm_fd, 0);
+    if (shm->shmaddr == MAP_FAILED) {
+        perror("mmap");
+        close(shm->shm_fd);
+        shm_unlink(SHM_NAME);
+        free(shm);
+        return NULL;
+    }
+        memset(shm->shmaddr, 0, SHM_SIZE);
+        snprintf(shm->sem_name, sizeof(shm->sem_name), "%s_%d", SEM_NAME, getpid());
     
-    memset(shm->shmaddr, 0, SHM_SIZE);
-    
-    shm->semid = semget(SEM_KEY, 1, IPC_CREAT | IPC_EXCL | 0666);
-    if (shm->semid == -1) {
-        shm->semid = semget(SEM_KEY, 1, IPC_CREAT | 0666);
-        if (shm->semid == -1) {
-            perror("semget");
-            shmdt(shm->shmaddr);
-            shmctl(shm->shmid, IPC_RMID, NULL);
+    shm->sem = sem_open(shm->sem_name, O_CREAT | O_EXCL, 0666, 1);
+    if (shm->sem == SEM_FAILED) {        shm->sem = sem_open(shm->sem_name, O_CREAT, 0666, 1);
+        if (shm->sem == SEM_FAILED) {
+            perror("sem_open");
+            munmap(shm->shmaddr, SHM_SIZE);
+            close(shm->shm_fd);
+            shm_unlink(SHM_NAME);
             free(shm);
             return NULL;
         }
-        printf("[SEM] Использован существующий семафор (semid=%d)\n", shm->semid);
+        printf("[SEM] Использован существующий семафор: %s\n", shm->sem_name);
     } else {
-        printf("[SEM] Создан новый семафор (semid=%d)\n", shm->semid);
-    }
-    
-    created_semid = shm->semid;
-    
-    if (semctl(shm->semid, 0, SETVAL, 1) == -1) {
-        perror("semctl");
-        shmdt(shm->shmaddr);
-        shmctl(shm->shmid, IPC_RMID, NULL);
-        semctl(shm->semid, 0, IPC_RMID);
-        free(shm);
-        return NULL;
+        printf("[SEM] Создан новый семафор: %s\n", shm->sem_name);
     }
     
     return shm;
@@ -109,44 +90,37 @@ shared_memory_t* create_shared_memory() {
 
 void destroy_shared_memory(shared_memory_t *shm) {
     if (!shm) return;
+    if (shm->shmaddr && shm->shmaddr != MAP_FAILED) {
+        munmap(shm->shmaddr, SHM_SIZE);
+    }
+    if (shm->shm_fd != -1) {
+        close(shm->shm_fd);
+    }
+    shm_unlink(SHM_NAME);
+    if (shm->sem && shm->sem != SEM_FAILED) {
+        sem_close(shm->sem);
+        sem_unlink(shm->sem_name);
+    }
     
-    if (shm->shmaddr && shm->shmaddr != (void*)-1) {
-        shmdt(shm->shmaddr);
-    }
-    if (shm->shmid != -1) {
-        shmctl(shm->shmid, IPC_RMID, NULL);
-    }
-    if (shm->semid != -1) {
-        semctl(shm->semid, 0, IPC_RMID);
-    }
     free(shm);
-    
-    created_shmid = -1;
-    created_semid = -1;
 }
 
-void semaphore_wait(int semid) {
-    struct sembuf sb;
-    sb.sem_num = 0;
-    sb.sem_op = -1;
-    sb.sem_flg = 0;
+void semaphore_wait(sem_t *sem) {
+    if (!sem) return;
     
-    while (semop(semid, &sb, 1) == -1) {
+    while (sem_wait(sem) == -1) {
         if (errno == EINTR) continue;
-        perror("semop wait");
+        perror("sem_wait");
         break;
     }
 }
 
-void semaphore_signal(int semid) {
-    struct sembuf sb;
-    sb.sem_num = 0;
-    sb.sem_op = 1;
-    sb.sem_flg = 0;
+void semaphore_signal(sem_t *sem) {
+    if (!sem) return;
     
-    while (semop(semid, &sb, 1) == -1) {
+    while (sem_post(sem) == -1) {
         if (errno == EINTR) continue;
-        perror("semop signal");
+        perror("sem_post");
         break;
     }
 }
