@@ -1,4 +1,4 @@
-#include "POSIX.h"
+#include "posix.h"
 #include <pthread.h>
 
 ChatInfo *global_inf = NULL;
@@ -6,14 +6,14 @@ ChatInfo *global_inf = NULL;
 void *threads(void *arg) {
     ChatInfo *inf = (ChatInfo *)arg;
     char buffer[MSG_SIZE];
-    unsigned int priority;
+    unsigned int priority = 0;
     
     while (inf->running) {
         int bytes = receiveMSG(inf, buffer, &priority);
         
         if (bytes > 0) {
             if (priority == EXIT_PRIORITY) {
-                printf("\n[Собеседник завершил работу]\n");
+                printf("\n\n[Собеседник завершил работу]\n");
                 inf->running = 0;
                 break;
             }
@@ -29,6 +29,7 @@ void *threads(void *arg) {
 int main(int argc, char *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Использование: %s <имя_очереди>\n", argv[0]);
+        fprintf(stderr, "Пример: %s mychat\n", argv[0]);
         exit(EXIT_FAILURE);
     }
     
@@ -36,16 +37,18 @@ int main(int argc, char *argv[]) {
     pthread_t thread;
     char input[MSG_SIZE];
     
-    signal(SIGINT, signals);
     global_inf = &inf;
+    signal(SIGINT, signals);
     
     if (initChat(&inf, argv[1]) == -1) {
+        fprintf(stderr, "Ошибка инициализации очередей сообщений.\n");
         exit(EXIT_FAILURE);
     }
     
     printf("\n=== P2P Чат запущен ===\n");
-    printf("Введите сообщение и нажмите Enter для отправки\n");
-    printf("Для выхода введите 'exit' или нажмите Ctrl+C\n\n");
+    printf("Имя очереди: %s\n", argv[1]);
+    printf("Введите сообщение и нажмите Enter для отправки.\n");
+    printf("Для выхода введите 'exit' или нажмите Ctrl+C.\n\n");
     
     if (pthread_create(&thread, NULL, threads, &inf) != 0) {
         perror("pthread_create");
@@ -66,7 +69,7 @@ int main(int argc, char *argv[]) {
             input[len-1] = '\0';
         }
         
-        if (strcmp(input, "exit") == 0 || strcmp(input, "EXIT") == 0) {
+        if (strcasecmp(input, "exit") == 0) {
             sendMSG(&inf, "EXIT", EXIT_PRIORITY);
             inf.running = 0;
             break;

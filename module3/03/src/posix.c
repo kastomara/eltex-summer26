@@ -1,20 +1,28 @@
 #include "posix.h"
+
 extern ChatInfo *global_inf;
 
-int initChat (ChatInfo *inf, const char *base_name) {
+int initChat(ChatInfo *inf, const char *base_name) {
     char queue1[128], queue2[128];
     struct mq_attr attr;
 
-    snprintf(queue1, sizeof(queue1), "/%s_1", base_name);
-    snprintf(queue2, sizeof(queue2), "/%s_2", base_name);
+    if (base_name[0] == '/') {
+        snprintf(queue1, sizeof(queue1), "%s_1", base_name);
+        snprintf(queue2, sizeof(queue2), "%s_2", base_name);
+    } else {
+        snprintf(queue1, sizeof(queue1), "/%s_1", base_name);
+        snprintf(queue2, sizeof(queue2), "/%s_2", base_name);
+    }
 
     attr.mq_flags = 0;
-    attr.mq_maxmgs = 10;
-    attr.mg_size = MSG_SIZE;
-    attr.mq_cur = 0;
+    attr.mq_maxmsg = 10;
+    attr.mq_msgsize = MSG_SIZE;
+    attr.mq_curmsgs = 0;
 
     inf->created_queues = 0;
-    inf->active = 0;
+    inf->running = 1;
+    inf->send_queue = (mqd_t)-1;
+    inf->receive_queue = (mqd_t)-1;
     
     mqd_t q1 = mq_open(queue1, O_RDWR | O_CREAT | O_EXCL, 0666, &attr);
     
@@ -38,7 +46,7 @@ int initChat (ChatInfo *inf, const char *base_name) {
         
         printf("Подключен к существующим очередям:\n");
         printf("  Отправка: %s\n", queue1);
-        printf("  Прием: %s\n", queue2);
+        printf("  Прием:    %s\n", queue2);
         
     } else if (q1 != (mqd_t)-1) {
         mqd_t q2 = mq_open(queue2, O_RDWR | O_CREAT | O_EXCL, 0666, &attr);
@@ -54,19 +62,21 @@ int initChat (ChatInfo *inf, const char *base_name) {
         inf->receive_queue = q1;
         inf->created_queues = 1;
         
-        printf("Созданы новые очереди:\n");
-        printf("  Прием: %s\n", queue1);
+        printf("Созданы новые очереди сообщений:\n");
+        printf("  Прием:    %s\n", queue1);
         printf("  Отправка: %s\n", queue2);
     } else {
         perror("mq_open");
         return -1;
     }
-    strcpy(inf->name, base_name);
+
+    strncpy(inf->name, base_name, sizeof(inf->name) - 1);
+    inf->name[sizeof(inf->name) - 1] = '\0';
     
     return 0;
 }
 
-void cleanChat (ChatInfo *inf) {
+void cleanChat(ChatInfo *inf) {
     char queue1[128], queue2[128];
     
     if (inf->send_queue != (mqd_t)-1) {
@@ -80,47 +90,59 @@ void cleanChat (ChatInfo *inf) {
     }
 
     if (inf->created_queues) {
-        snprintf(queue1, sizeof(queue1), "/%s_1", ctx->name);
-        snprintf(queue2, sizeof(queue2), "/%s_2", ctx->name);
+        if (inf->name[0] == '/') {
+            snprintf(queue1, sizeof(queue1), "%s_1", inf->name);
+            snprintf(queue2, sizeof(queue2), "%s_2", inf->name);
+        } else {
+            snprintf(queue1, sizeof(queue1), "/%s_1", inf->name);
+            snprintf(queue2, sizeof(queue2), "/%s_2", inf->name);
+        }
         
         mq_unlink(queue1);
         mq_unlink(queue2);
-        printf("\nОчереди удалены.\n");
+        printf("\n[Очереди %s и %s удалены]\n", queue1, queue2);
+        inf->created_queues = 0;
     }
     
     inf->running = 0;
 }
 
-void sendMSG (ChatInfo *inf, const char *msg, unsigned char priority) {
+void sendMSG(ChatInfo *inf, const char *msg, unsigned int priority) {
+    if (inf->send_queue == (mqd_t)-1) return;
     if (mq_send(inf->send_queue, msg, strlen(msg) + 1, priority) == -1) {
         perror("mq_send");
     }
 }
-int receiveMSG (ChatInfo *inf, const char *msg, unsigned char priority) {
+
+int receiveMSG(ChatInfo *inf, char *buffer, unsigned int *priority) {
+    if (inf->receive_queue == (mqd_t)-1) return -1;
+
     struct timespec timeout;
     clock_gettime(CLOCK_REALTIME, &timeout);
     timeout.tv_sec += 1;
     
-    ssize_t bytes = mq_timedreceive(inf->receive_queue, buffer, 
-                                    MAX_MSG_SIZE, priority, &timeout);
+    ssize_t bytes = mq_timedreceive(inf->receive_queue, buffer, MSG_SIZE, priority, &timeout);
     
     if (bytes == -1) {
         if (errno == ETIMEDOUT) {
             return 0;
         }
-        perror("mq_receive");
+        if (errno != EBADF && errno != EINTR) {
+            perror("mq_receive");
+        }
         return -1;
     }
     
     buffer[bytes] = '\0';
-    return bytes;
+    return (int)bytes;
 }
 
 void signals(int sig) {
     if (sig == SIGINT) {
-        printf("\nПолучен сигнал SIGINT. Завершение работы...\n");
+        printf("\n\nПолучен сигнал SIGINT. Отправка уведомления и завершение...\n");
         if (global_inf) {
-            send_message(global_inf, "EXIT", EXIT_PRIORITY);
+            sendMSG(global_inf, "EXIT", EXIT_PRIORITY);
+            cleanChat(global_inf);
             global_inf->running = 0;
         }
         exit(0);

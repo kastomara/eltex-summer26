@@ -15,7 +15,7 @@
 
 #define MAX_TOPIC_LEN 50
 #define MAX_PAYLOAD_LEN 256
-#define MAX_TEXT_LEN 300
+#define MAX_TEXT_LEN 350
 #define MAX_SUBSCRIBERS 100
 #define MAX_PUBLISHERS 100
 #define MAX_TOPICS_PER_SUB 10
@@ -51,7 +51,7 @@ int get_message_queue(key_t key);
 void remove_message_queue(int msgid);
 int send_message(int msgid, long mtype, const char* text);
 int receive_message(int msgid, long mtype, char* buffer, size_t buf_size);
-    
+
 void init_broker_state(BrokerState* state);
 int add_subscriber(BrokerState* state, pid_t pid, const char* topic);
 int remove_subscriber(BrokerState* state, pid_t pid, const char* topic);
@@ -66,7 +66,8 @@ int subscriber_subscribe(int msgid, pid_t pid, const char* topic);
 int subscriber_unsubscribe(int msgid, pid_t pid, const char* topic);
 int subscriber_receive_messages(int msgid, pid_t pid, char* buffer, size_t buf_size);
 
-void parse_message(const char* text, char* command, pid_t* pid, char* topic);
+void parse_message(const char* text, char* command, pid_t* pid, char* topic, char* payload);
+void parse_subscriber_message(const char* text, char* command, char* topic, char* payload);
 void signal_handler(int sig);
 void setup_signal_handlers(void);
 

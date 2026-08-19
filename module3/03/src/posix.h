@@ -11,32 +11,25 @@
 #include <errno.h>
 #include <time.h>
 #include <pthread.h>
-
-#ifdef __APPLE__
-    #include <sys/posix_sem.h>
-    #define USE_PIPE_EMULATION 1
-#else
-    #include <mqueue.h>
-    #define USE_PIPE_EMULATION 0
-#endif
+#include <mqueue.h>
 
 #define MSG_SIZE 256
 #define NORM_PRIORITY 1
 #define EXIT_PRIORITY 10
 
 typedef struct {
-    char name[32];
+    char name[64];
     mqd_t receive_queue;
     mqd_t send_queue;
-    int created_queue;
-    int active;
+    int created_queues;
+    volatile sig_atomic_t running;
 } ChatInfo;
 
-int initChat (ChatInfo *inf, const char *base_name);
-void cleanChat (ChatInfo *inf);
-void sendMSG (ChatInfo *inf, const char *msg, unsigned char priority);
-int receiveMSG (ChatInfo *inf, const char *msg, unsigned char priority);
+int initChat(ChatInfo *inf, const char *base_name);
+void cleanChat(ChatInfo *inf);
+void sendMSG(ChatInfo *inf, const char *msg, unsigned int priority);
+int receiveMSG(ChatInfo *inf, char *buffer, unsigned int *priority);
 void signals(int sig);
-void *threads (void *arg);
+void *threads(void *arg);
 
 #endif
