@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "-b") == 0) {
         printf("[Broker PID=%d]: Запуск брокера сообщений...\n", getpid());
         
-        int msgid = create_message_queue(MSG_KEY);
+        int msgid = get_message_queue(MSG_KEY, IPC_CREAT | IPC_EXCL | 0666);
         if (msgid == -1) {
             printf("[Broker]: Очередь сообщений с ключом %d уже существует (другой брокер уже запущен). Завершение работы.\n", MSG_KEY);
             exit(1);
@@ -32,58 +32,41 @@ int main(int argc, char *argv[]) {
         
         while (state.running && !signal_received) {
             char buffer[MAX_TEXT_LEN];
-            
             if (receive_message(msgid, 1, buffer, sizeof(buffer)) == -1) {
-                if (signal_received || errno == EINTR) {
-                    printf("\n[Broker]: Получен сигнал завершения SIGINT...\n");
-                    break;
-                }
-                if (errno == EIDRM || errno == EINVAL) {
-                    break;
-                }
+                if (signal_received || errno == EINTR || errno == EIDRM || errno == EINVAL) break;
                 continue;
             }
             
-            char command[20];
+            char command[20], topic[MAX_TOPIC_LEN], payload[MAX_PAYLOAD_LEN];
             pid_t sender_pid = 0;
-            char topic[MAX_TOPIC_LEN];
-            char payload[MAX_PAYLOAD_LEN];
-            
             parse_message(buffer, command, &sender_pid, topic, payload);
             
             if (strcmp(command, "subscribe") == 0) {
-                if (strlen(topic) == 0) {
-                    printf("[Broker]: Ошибка: пустая тема подписки от PID %d\n", sender_pid);
-                } else if (add_subscriber(&state, sender_pid, topic) == 0) {
-                    printf("[Broker]: Подписчик PID %d успешно подписан на тему '%s'\n", sender_pid, topic);
+                if (strlen(topic) == 0 || add_subscriber(&state, sender_pid, topic) != 0) {
+                    printf("[Broker]: %s подписки PID %d на тему '%s'\n", 
+                           strlen(topic) == 0 ? "Ошибка: пустая тема" : "Не удалось", sender_pid, topic);
                 } else {
-                    printf("[Broker]: Не удалось подписать PID %d на тему '%s' (достигнут лимит)\n", sender_pid, topic);
+                    printf("[Broker]: Подписчик PID %d успешно подписан на тему '%s'\n", sender_pid, topic);
                 }
-            } 
-            else if (strcmp(command, "unsubscribe") == 0) {
+            } else if (strcmp(command, "unsubscribe") == 0) {
                 if (remove_subscriber(&state, sender_pid, topic) == 0) {
                     printf("[Broker]: Подписчик PID %d отписался от темы '%s'\n", sender_pid, topic);
                 } else {
                     printf("[Broker]: Подписчик PID %d не был подписан на тему '%s'\n", sender_pid, topic);
                 }
-            } 
-            else if (strcmp(command, "send") == 0) {
-                add_publisher(&state, sender_pid);
-                
+            } else if (strcmp(command, "send") == 0) {
+                update_publisher(&state, sender_pid, true);
                 int sent = broadcast_message(&state, topic, payload);
-                printf("[Broker]: Рассылка сообщения по теме '%s' от издателя PID %d -> доставлено %d подписчикам. Текст: \"%s\"\n", 
+                printf("[Broker]: Рассылка по теме '%s' от PID %d -> %d подписчикам: \"%s\"\n", 
                        topic, sender_pid, sent, payload);
-            }
-            else {
+            } else {
                 printf("[Broker]: Неизвестная команда: '%s' от PID %d\n", command, sender_pid);
             }
         }
         
         cleanup_broker(&state);
         printf("[Broker]: Очередь удалена, работа брокера корректно завершена.\n");
-    }
-
-    else if (strcmp(argv[1], "-p") == 0) {
+    } else if (strcmp(argv[1], "-p") == 0) {
         if (argc < 3) {
             fprintf(stderr, "[Publisher]: Ошибка: необходимо указать тему (topic)\n");
             fprintf(stderr, "Использование: %s -p <topic>\n", argv[0]);
@@ -93,7 +76,7 @@ int main(int argc, char *argv[]) {
         char* topic = argv[2];
         pid_t pid = getpid();
         
-        int msgid = get_message_queue(MSG_KEY);
+        int msgid = get_message_queue(MSG_KEY, 0666);
         if (msgid == -1) {
             printf("[Publisher PID=%d]: Брокер не запущен (очередь сообщений не найдена). Завершение.\n", pid);
             exit(1);
@@ -120,22 +103,17 @@ int main(int argc, char *argv[]) {
                     printf("[Publisher PID=%d]: Очередь сообщений была удалена брокером. Завершение работы...\n", pid);
                     break;
                 }
-                if (signal_received || errno == EINTR) {
-                    break;
-                }
+                if (signal_received || errno == EINTR) break;
                 perror("[Publisher]: Ошибка отправки сообщения");
             }
             
-            // Задержка 2 секунды с интервальной проверкой сигнала завершения
             for (int step = 0; step < 20 && !signal_received; step++) {
-                usleep(100000); // 100 мс
+                usleep(100000);
             }
         }
         
         printf("[Publisher PID=%d]: Завершение работы выполнено.\n", pid);
-    }
-
-    else if (strcmp(argv[1], "-s") == 0) {
+    } else if (strcmp(argv[1], "-s") == 0) {
         if (argc < 3) {
             fprintf(stderr, "[Subscriber]: Ошибка: укажите хотя бы одну тему для подписки\n");
             fprintf(stderr, "Использование: %s -s <topic1> [topic2] ...\n", argv[0]);
@@ -145,7 +123,7 @@ int main(int argc, char *argv[]) {
         pid_t pid = getpid();
         printf("[Subscriber PID=%d]: Запуск подписчика...\n", pid);
         
-        int msgid = get_message_queue(MSG_KEY);
+        int msgid = get_message_queue(MSG_KEY, 0666);
         if (msgid == -1) {
             printf("[Subscriber PID=%d]: Брокер не запущен (очередь сообщений не найдена). Завершение.\n", pid);
             exit(1);
@@ -154,7 +132,7 @@ int main(int argc, char *argv[]) {
         printf("[Subscriber PID=%d]: Подключен к очереди брокера (ID: %d)\n", pid, msgid);
         
         for (int i = 2; i < argc; i++) {
-            if (subscriber_subscribe(msgid, pid, argv[i]) == 0) {
+            if (subscriber_change_subscription(msgid, pid, argv[i], "subscribe") == 0) {
                 printf("[Subscriber PID=%d]: Оформлена подписка на тему '%s'\n", pid, argv[i]);
             } else {
                 printf("[Subscriber PID=%d]: Ошибка подписки на тему '%s'\n", pid, argv[i]);
@@ -166,11 +144,8 @@ int main(int argc, char *argv[]) {
         char buffer[MAX_TEXT_LEN];
         while (!signal_received) {
             if (subscriber_receive_messages(msgid, pid, buffer, sizeof(buffer)) == 0) {
-                char command[20];
-                char topic[MAX_TOPIC_LEN];
-                char payload[MAX_PAYLOAD_LEN];
-                
-                parse_subscriber_message(buffer, command, topic, payload);
+                char command[20], topic[MAX_TOPIC_LEN], payload[MAX_PAYLOAD_LEN];
+                parse_message(buffer, command, NULL, topic, payload);
                 
                 if (strcmp(command, "send") == 0) {
                     printf("[Subscriber PID=%d] -> [ПОЛУЧЕНО] Тема: '%s' | Данные: \"%s\"\n", 
@@ -190,17 +165,20 @@ int main(int argc, char *argv[]) {
             }
         }
         
-        if (!signal_received && get_message_queue(MSG_KEY) != -1) {
-            for (int i = 2; i < argc; i++) {
-                if (subscriber_unsubscribe(msgid, pid, argv[i]) == 0) {
-                    printf("[Subscriber PID=%d]: Отправлено уведомление об отписке от темы '%s'\n", pid, argv[i]);
+        printf("\n[Subscriber PID=%d]: Завершение по сигналу SIGINT. Отправка сообщений об отписке...\n", pid);
+        for (int i = 2; i < argc; i++) {
+            if (subscriber_change_subscription(msgid, pid, argv[i], "unsubscribe") == 0) {
+                printf("[Subscriber PID=%d]: Отправлено уведомление об отписке от темы '%s' (unsubscribe)\n", pid, argv[i]);
+            } else {
+                if (errno == EIDRM || errno == EINVAL) {
+                    printf("[Subscriber PID=%d]: Очередь недоступна, отправка отписки не требуется.\n", pid);
+                    break;
                 }
             }
         }
         
         printf("[Subscriber PID=%d]: Завершение работы выполнено.\n", pid);
-    } 
-    else {
+    } else {
         fprintf(stderr, "Неизвестный параметр: %s\n", argv[1]);
         fprintf(stderr, "Допустимые ключи: -b (брокер), -p (издатель), -s (подписчик)\n");
         exit(1);

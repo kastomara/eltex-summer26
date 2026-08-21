@@ -1,7 +1,5 @@
 #include "posix.h"
 
-extern ChatInfo *global_inf;
-
 int initChat(ChatInfo *inf, const char *base_name) {
     char queue1[128], queue2[128];
     struct mq_attr attr;
@@ -44,10 +42,6 @@ int initChat(ChatInfo *inf, const char *base_name) {
         inf->receive_queue = q2;
         inf->created_queues = 0;
         
-        printf("Подключен к существующим очередям:\n");
-        printf("  Отправка: %s\n", queue1);
-        printf("  Прием:    %s\n", queue2);
-        
     } else if (q1 != (mqd_t)-1) {
         mqd_t q2 = mq_open(queue2, O_RDWR | O_CREAT | O_EXCL, 0666, &attr);
         
@@ -62,9 +56,6 @@ int initChat(ChatInfo *inf, const char *base_name) {
         inf->receive_queue = q1;
         inf->created_queues = 1;
         
-        printf("Созданы новые очереди сообщений:\n");
-        printf("  Прием:    %s\n", queue1);
-        printf("  Отправка: %s\n", queue2);
     } else {
         perror("mq_open");
         return -1;
@@ -100,7 +91,6 @@ void cleanChat(ChatInfo *inf) {
         
         mq_unlink(queue1);
         mq_unlink(queue2);
-        printf("\n[Очереди %s и %s удалены]\n", queue1, queue2);
         inf->created_queues = 0;
     }
     
@@ -135,16 +125,4 @@ int receiveMSG(ChatInfo *inf, char *buffer, unsigned int *priority) {
     
     buffer[bytes] = '\0';
     return (int)bytes;
-}
-
-void signals(int sig) {
-    if (sig == SIGINT) {
-        printf("\n\nПолучен сигнал SIGINT. Отправка уведомления и завершение...\n");
-        if (global_inf) {
-            sendMSG(global_inf, "EXIT", EXIT_PRIORITY);
-            cleanChat(global_inf);
-            global_inf->running = 0;
-        }
-        exit(0);
-    }
 }

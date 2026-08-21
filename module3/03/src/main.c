@@ -3,6 +3,21 @@
 
 ChatInfo *global_inf = NULL;
 
+void signals(int sig) {
+    if (sig == SIGINT) {
+        printf("\n\nПолучен сигнал SIGINT. Отправка EXIT собеседнику и завершение...\n");
+        if (global_inf) {
+            sendMSG(global_inf, "EXIT", EXIT_PRIORITY);
+            if (global_inf->created_queues) {
+                printf("[Очереди удалены из системы]\n");
+            }
+            cleanChat(global_inf);
+            global_inf->running = 0;
+        }
+        exit(0);
+    }
+}
+
 void *threads(void *arg) {
     ChatInfo *inf = (ChatInfo *)arg;
     char buffer[MSG_SIZE];
@@ -45,6 +60,25 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     
+    char q1[128], q2[128];
+    if (argv[1][0] == '/') {
+        snprintf(q1, sizeof(q1), "%s_1", argv[1]);
+        snprintf(q2, sizeof(q2), "%s_2", argv[1]);
+    } else {
+        snprintf(q1, sizeof(q1), "/%s_1", argv[1]);
+        snprintf(q2, sizeof(q2), "/%s_2", argv[1]);
+    }
+
+    if (inf.created_queues) {
+        printf("Созданы новые очереди сообщений:\n");
+        printf("  Прием:    %s\n", q1);
+        printf("  Отправка: %s\n", q2);
+    } else {
+        printf("Подключен к существующим очередям:\n");
+        printf("  Отправка: %s\n", q1);
+        printf("  Прием:    %s\n", q2);
+    }
+    
     printf("\n=== P2P Чат запущен ===\n");
     printf("Имя очереди: %s\n", argv[1]);
     printf("Введите сообщение и нажмите Enter для отправки.\n");
@@ -69,7 +103,7 @@ int main(int argc, char *argv[]) {
             input[len-1] = '\0';
         }
         
-        if (strcasecmp(input, "exit") == 0) {
+        if (strcmp(input, "exit") == 0 || strcmp(input, "EXIT") == 0) {
             sendMSG(&inf, "EXIT", EXIT_PRIORITY);
             inf.running = 0;
             break;
@@ -82,6 +116,9 @@ int main(int argc, char *argv[]) {
     
     pthread_join(thread, NULL);
     
+    if (inf.created_queues) {
+        printf("\n[Очереди удалены из системы]\n");
+    }
     cleanChat(&inf);
     global_inf = NULL;
     

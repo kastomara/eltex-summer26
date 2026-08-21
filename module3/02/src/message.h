@@ -46,8 +46,7 @@ typedef struct {
 
 extern volatile sig_atomic_t signal_received;
 
-int create_message_queue(key_t key);
-int get_message_queue(key_t key);
+int get_message_queue(key_t key, int flags);
 void remove_message_queue(int msgid);
 int send_message(int msgid, long mtype, const char* text);
 int receive_message(int msgid, long mtype, char* buffer, size_t buf_size);
@@ -55,19 +54,16 @@ int receive_message(int msgid, long mtype, char* buffer, size_t buf_size);
 void init_broker_state(BrokerState* state);
 int add_subscriber(BrokerState* state, pid_t pid, const char* topic);
 int remove_subscriber(BrokerState* state, pid_t pid, const char* topic);
-void add_publisher(BrokerState* state, pid_t pid);
-void remove_publisher(BrokerState* state, pid_t pid);
+void update_publisher(BrokerState* state, pid_t pid, bool add);
 bool is_subscribed(BrokerState* state, pid_t pid, const char* topic);
 int broadcast_message(BrokerState* state, const char* topic, const char* payload);
 void cleanup_broker(BrokerState* state);
 
 int publisher_send_message(int msgid, const char* topic, const char* payload);
-int subscriber_subscribe(int msgid, pid_t pid, const char* topic);
-int subscriber_unsubscribe(int msgid, pid_t pid, const char* topic);
+int subscriber_change_subscription(int msgid, pid_t pid, const char* topic, const char* action);
 int subscriber_receive_messages(int msgid, pid_t pid, char* buffer, size_t buf_size);
 
 void parse_message(const char* text, char* command, pid_t* pid, char* topic, char* payload);
-void parse_subscriber_message(const char* text, char* command, char* topic, char* payload);
 void signal_handler(int sig);
 void setup_signal_handlers(void);
 
