@@ -1,0 +1,66 @@
+Лабораторная работа №1
+1) Установить и настроить эмулятор GNS3
+
+2) Создать простейшую сеть, состоящую из 1 коммутатора и 2 компьютеров, назначить им произвольные ip адреса из одной сети
+Для того, чтобы назначить для компьютеров персональные ip адреса, заходим в консоль PC1 и PC2 и пишем следующее:
+
+PC1> ip 192.168.1.1/24
+Checking for duplicate address...
+PC1 : 192.168.1.1 255.255.255.0
+
+PC2> ip 192.168.1.2/24
+Checking for duplicate address...
+PC2 : 192.168.1.2 255.255.255.0
+
+В данном варианте адреса находятся в одной подсети 192.168.1.X. Последний октет задает устройство.  
+ 
+3) Запустить симуляцию, выполнить команду ping с одного из компьютеров, используя ip адрес второго компьютера
+
+PC2> ping 192.168.1.1
+
+84 bytes from 192.168.1.1 icmp_seq=1 til=64 time=0.193 ms
+84 bytes from 192.168.1.1 icmp_seq=2 til=64 time=0.250 ms
+84 bytes from 192.168.1.1 icmp_seq=3 til=64 time=0.251 ms
+84 bytes from 192.168.1.1 icmp_seq=4 til=64 time=0.251 ms
+84 bytes from 192.168.1.1 icmp_seq=5 til=64 time=0.265 ms
+
+Сетевой узел доступен
+ 
+4) Перехватить трафик протокола arp на всех линках(nb!), задокументировать и проанализировать заголовки пакетов в программе Wireshark, для фильтрации трафика, относящегося к указанному протоколу использовать фильтры Wireshark
+ 
+
+5) Создать простейшую сеть, состоящую из 1 маршрутизатора и 2 компьютеров, назначить им произвольные ip адреса из разных сетей
+
+PC3> ip 192.168.1.24
+Checking for duplicate address...
+PC3 : 192.168.1.24 255.255.255.0
+
+PC4> ip 223.0.3.64
+Checking for duplicate address...
+PC4 : 223.0.3.64 255.255.255.0
+
+Настройка маршрутизатора:
+ESW1# enable
+ESW1#configure terminal
+ESW1(config)#interface FastEthernet0/1
+ESW1(config-if)#ip address 192.168.1.24 255.255.255.0
+ESW1(config-if)#no shutdown
+ESW1(config-if)#
+*Mar  1 00:11:20.439: %LINK-3-UPDOWN: Interface FastEthernet0/1, changed state to up
+*Mar  1 00:11:21.439: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet0/1, changed state to up
+ESW1(config-if)#exit
+ESW1(config)#interface FastEthernet0/0          
+ESW1(config-if)#ip address 223.0.3.64 255.255.255.0
+ESW1(config-if)#no shutdown                        
+ESW1(config-if)#
+*Mar  1 00:17:06.867: %LINK-3-UPDOWN: Interface FastEthernet0/0, changed state to up
+*Mar  1 00:17:07.867: %LINEPROTO-5-UPDOWN: Line protocol on Interface FastEthernet0/0, changed state to up
+ESW1(config-if)#exit
+  
+6) Запустить симуляцию, выполнить команду ping с одного из компьютеров, используя ip адрес второго компьютера
+
+Если провести Ping при таких настройках конфигурации, то получим
+PC4> ping 192.168.1.24
+No gateway found
+
+7) Перехватить трафик протокола arp и icmp на всех линках(nb!), задокументировать и проанализировать заголовки пакетов в программе Wireshark, для фильтрации трафика, относящегося к указанному протоколу использовать фильтры Wireshark
