@@ -39,14 +39,18 @@ static ssize_t write_proc(struct file *filp, const char *buf, size_t count, loff
     return count;
 }
  
-static const struct proc_ops proc_fops = {
+static const struct proc_fops = {
     .proc_read = read_proc,
     .proc_write = write_proc,
 };
  
 static void create_new_proc_entry(void) {
-    proc_create(FILE_NAME, 0666, NULL, &proc_fops);
+    proc_create(FILE_NAME, 0660, NULL, &proc_fops);
     msg = kmalloc(COUNT_SIZE * sizeof(char), GFP_KERNEL);
+//    if (msg = NULL) {
+//        printk("Не удалось выделить запрашиваемый объем памяти");
+//        break;
+//    }
 }
  
 static int __init proc_init (void) {
