@@ -17,4 +17,3 @@ static void __exit hello_terminate(void){
 
 module_init(hello_init);
 module_exit(hello_terminate);
-

@@ -1,10 +1,7 @@
-obj-m += hello.o
+obj-m += chardev.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-com:	
-	$(shell sudo insmod hello.ko)
-	@sudo dmesg | tail -10
+
 clean:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-	$(shell sudo rmmod hello)
