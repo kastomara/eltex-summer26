@@ -11,5 +11,5 @@
 ![Image](https://drive.google.com/uc?export=view&id=1xAnQIl8PzvQvBfXZ3vrtWEsGsJy_GTx1)
 <br>Отключаем модуль.
 ```bash
-  sudo rmmod crocs
+sudo rmmod procs
 ```
