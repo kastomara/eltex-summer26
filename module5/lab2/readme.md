@@ -1,5 +1,5 @@
 Сборка и загрузка модуля:
-[!Image](https://drive.google.com/uc?export=view&id=1Z0zN092hQHMoxyqYQQP_oyUbH5_J2vZP)
+![Image](https://drive.google.com/uc?export=view&id=1Z0zN092hQHMoxyqYQQP_oyUbH5_J2vZP)
 <br>Проверяем его наличие в модулях ядра:
 <br>Пробуем записать что-то менее установленного COUNT_SIZE
 <br>Пробуем записать что-то более установленного COUNT_SIZE. 
