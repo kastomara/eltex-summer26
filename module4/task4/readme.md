@@ -42,7 +42,7 @@ ip dhcp pool POOL_LAN2
  network 192.168.20.0 255.255.255.0
  default-router 192.168.20.1
  exit
-``
+```
 
 <br>3) Настроить статическую (nb!) маршрутизацию между подсетями
 <br>Наcтройка DHCP Relay на R1:
@@ -73,7 +73,7 @@ ip dhcp
 84 bytes from 192.168.20.3 icmp_seq=3 ttl=63 time=20.576 ms
 84 bytes from 192.168.20.3 icmp_seq=4 ttl=63 time=23.239 ms
 84 bytes from 192.168.20.3 icmp_seq=5 ttl=63 time=31.918 ms
-``
+```
 <br>Все работает.
 
 <br>5) Перехватить в wireshark диалог одного из VPC с сервером DHCP, разобрать с комментариями
