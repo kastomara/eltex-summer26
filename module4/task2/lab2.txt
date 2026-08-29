@@ -5,7 +5,7 @@
 Настройка основного коммутатора (пусть будет коммутатор 2):
 enable
 configure terminal
-spanning-tree mode rapid-prst
+spanning-tree mode pvst
 spanning-tree vlan 1 priority 4096
 end
 write memory
@@ -13,7 +13,7 @@ write memory
 Настройка остальных коммутаторов:
 enable
 configure terminal
-spanning-tree mode rapid-prst
+spanning-tree mode pvst
 end
 write memory
 
