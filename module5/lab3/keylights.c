@@ -30,7 +30,7 @@ static void set_leds(int state)
     }
 }
 
-static void timer(struct timer_list *t) {
+static void my_timer_fun(struct timer_list *t) {
     int *pstatus = &_kbledstatus;
     if (*pstatus == test) {
         *pstatus = RESTORE_LEDS;
@@ -40,7 +40,7 @@ static void timer(struct timer_list *t) {
     set_leds(*pstatus);
 
     if (test >= 1 && test <= 7) {
-        mod_timer(&timier, jiffles + BLINK_DELAY);
+        mod_timer(&my_timer, jiffies + BLINK_DELAY);
     }
 }
 
@@ -54,8 +54,9 @@ static ssize_t foo_store(struct kobject *kobj, struct kobj_attribute *attr, cons
     if (sscanf(buf, "%du", &test) == 1) {
         if (test >= 1 && test <= 7) {
             set_leds(test);
+            /* mod_timer(&my_timer, jiffies + BLINK_DELAY);*/
         } else {
-            del_timer_sync(&timer);
+            timer_delete_sync(&my_timer);
             set_leds(RESTORE_LEDS);
         }
     }
@@ -66,7 +67,7 @@ static struct kobj_attribute foo_attribute = __ATTR(test, 0660, foo_show, foo_st
 
 static int __init sys_init(void)
 {
-    timer_setup(&timer, timer, 0);
+    timer_setup(&my_timer, my_timer_fun, 0);
     
     example_kobject = kobject_create_and_add("systest", kernel_kobj);
     if (!example_kobject)
@@ -84,7 +85,7 @@ static int __init sys_init(void)
 
 static void __exit sys_exit(void)
 {
-    del_timer_sync(&timer);
+    timer_delete_sync(&my_timer);
     set_leds(RESTORE_LEDS);
     kobject_put(example_kobject);
     pr_info("LED module unloaded successfully\n");

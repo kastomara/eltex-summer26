@@ -23,7 +23,7 @@ enum {
  
 static atomic_t already_open = ATOMIC_INIT(CDEV_NOT_USED); 
 static char msg[MSG_BUF];
-static char user_data[BUF_LEN] = '';
+static char user_data[BUF_LEN];
 static struct class *cls; 
 
 static struct file_operations chardev_fops = { 
