@@ -1,0 +1,14 @@
+O IA 192.168.30.0/24 [110/12] via 10.0.123.2, 00:16:27, FastEthernet0/0
+R    192.168.10.0/24 [120/2] via 10.0.15.1, 00:00:26, FastEthernet1/0
+O IA 192.168.40.0/24 [110/12] via 10.0.123.3, 00:16:27, FastEthernet0/0
+R    192.168.20.0/24 [120/1] via 10.0.15.1, 00:00:26, FastEthernet1/0
+     10.0.0.0/8 is variably subnetted, 7 subnets, 2 masks
+C       10.0.15.0/30 is directly connected, FastEthernet1/0
+O IA    10.0.26.0/30 [110/2] via 10.0.123.2, 00:16:27, FastEthernet0/0
+R       10.0.45.0/30 [120/1] via 10.0.15.1, 00:00:27, FastEthernet1/0
+O IA    10.0.38.0/30 [110/11] via 10.0.123.3, 00:16:28, FastEthernet0/0
+O IA    10.0.37.0/30 [110/2] via 10.0.123.3, 00:16:28, FastEthernet0/0
+O IA    10.0.67.0/30 [110/3] via 10.0.123.3, 00:16:28, FastEthernet0/0
+                     [110/3] via 10.0.123.2, 00:16:28, FastEthernet0/0
+C       10.0.123.0/24 is directly connected, FastEthernet0/0
+O IA 192.168.50.0/24 [110/12] via 10.0.123.3, 00:16:35, FastEthernet0/0
