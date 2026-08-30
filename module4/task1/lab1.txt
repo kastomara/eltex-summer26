@@ -27,7 +27,48 @@ PC2> ping 192.168.1.1
 Сетевой узел доступен
  
 4) Перехватить трафик протокола arp на всех линках(nb!), задокументировать и проанализировать заголовки пакетов в программе Wireshark, для фильтрации трафика, относящегося к указанному протоколу использовать фильтры Wireshark
- 
+Первый пакет спрашивает у всех адрессов (taget MAC - Broadcast) где находится 192.168.1.2 адрес. Протокол IPv4
+Frame 1: Packet, 64 bytes on wire (512 bits), 64 bytes captured (512 bits) on interface -, id 0
+Ethernet II, Src: Private_66:68:00 (00:50:79:66:68:00), Dst: Broadcast (ff:ff:ff:ff:ff:ff)
+    Destination: Broadcast (ff:ff:ff:ff:ff:ff)
+    Source: Private_66:68:00 (00:50:79:66:68:00)
+    Type: ARP (0x0806)
+    [Stream index: 0]
+    Padding: 000000000000000000000000000000000000
+    Frame check sequence: 0x00000000 [unverified]
+    [FCS Status: Unverified]
+Address Resolution Protocol (request)
+    Hardware type: Ethernet (1)
+    Protocol type: IPv4 (0x0800)
+    Hardware size: 6
+    Protocol size: 4
+    Opcode: request (1)
+    Sender MAC address: Private_66:68:00 (00:50:79:66:68:00)
+    Sender IP address: 192.168.1.1
+    Target MAC address: Broadcast (ff:ff:ff:ff:ff:ff)
+    Target IP address: 192.168.1.2
+
+Второй пакет (reply) отвечает где находится адрес. Причем отвечает target (192.168.1.2) обратно вопрошающему (192.168.1.1)
+Frame 2: Packet, 64 bytes on wire (512 bits), 64 bytes captured (512 bits) on interface -, id 0
+Ethernet II, Src: Private_66:68:01 (00:50:79:66:68:01), Dst: Private_66:68:00 (00:50:79:66:68:00)
+    Destination: Private_66:68:00 (00:50:79:66:68:00)
+    Source: Private_66:68:01 (00:50:79:66:68:01)
+    Type: ARP (0x0806)
+    [Stream index: 1]
+    Padding: 000000000000000000000000000000000000
+    Frame check sequence: 0x00000000 [unverified]
+    [FCS Status: Unverified]
+Address Resolution Protocol (reply)
+    Hardware type: Ethernet (1)
+    Protocol type: IPv4 (0x0800)
+    Hardware size: 6
+    Protocol size: 4
+    Opcode: reply (2)
+    Sender MAC address: Private_66:68:01 (00:50:79:66:68:01)
+    Sender IP address: 192.168.1.2
+    Target MAC address: Private_66:68:00 (00:50:79:66:68:00)
+    Target IP address: 192.168.1.1
+
 
 5) Создать простейшую сеть, состоящую из 1 маршрутизатора и 2 компьютеров, назначить им произвольные ip адреса из разных сетей
 
