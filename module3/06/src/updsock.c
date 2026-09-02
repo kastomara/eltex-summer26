@@ -25,7 +25,6 @@ int chat_is_running(Client* client) {
     return client ? client->running : 0;
 }
 
-// ИЗМЕНЕНО: добавляем параметр port
 Client* chat_create(const char* username) {
     Client* client = (Client*)malloc(sizeof(Client));
     if (!client) return NULL;
@@ -33,13 +32,13 @@ Client* chat_create(const char* username) {
     memset(client, 0, sizeof(Client));
     strncpy(client->username, username, MAX_USERNAME_LEN - 1);
     client->username[MAX_USERNAME_LEN - 1] = '\0';
+    
 
     if ((client->sockfd = socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
         free(client);
         return NULL;
     }
 
-    // Включить режим broadcast
     int broadcast_enable = 1;
     if (setsockopt(client->sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast_enable, 
                    sizeof(broadcast_enable)) < 0) {
@@ -49,7 +48,6 @@ Client* chat_create(const char* username) {
         return NULL;
     }
 
-    // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Включаем SO_REUSEADDR для совместного использования порта
     int reuse = 1;
     if (setsockopt(client->sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
         perror("setsockopt SO_REUSEADDR");
@@ -58,13 +56,11 @@ Client* chat_create(const char* username) {
         return NULL;
     }
 
-    // Включаем SO_REUSEPORT (если доступен) для лучшей совместимости
     #ifdef SO_REUSEPORT
     int reuseport = 1;
     setsockopt(client->sockfd, SOL_SOCKET, SO_REUSEPORT, &reuseport, sizeof(reuseport));
     #endif
 
-    // ВАЖНО: Все клиенты bind на ОДИНАКОВЫЙ порт
     bzero(&client->cliaddr, sizeof(client->cliaddr));
     client->cliaddr.sin_family = AF_INET;
     client->cliaddr.sin_port = htons(BRDCS_PORT);  // Все на порт 40000
@@ -81,23 +77,24 @@ Client* chat_create(const char* username) {
     bzero(&client->servaddr, sizeof(client->servaddr));
     client->servaddr.sin_family = AF_INET;
     client->servaddr.sin_port = htons(BRDCS_PORT);
-    if (inet_aton(BRDCS_ADDR, &client->servaddr.sin_addr) == 0) {
-        perror("inet_aton");
+    if (inet_pton(AF_INET, BRDCS_ADDR, &client->servaddr.sin_addr) <= 0) {
+        perror("inet_pton");
         close(client->sockfd);
         free(client);
         return NULL;
     }
     
+    client->client_id = (uint32_t)(time(NULL) ^ getpid());
     client->running = 1;
     return client;
 }
 
-// Остальной код без изменений
 int chat_send_message(Client* client, const char* message) {
-    if (!client || !client->running) return -1;
+    if (!client) return -1;
     
     Message chat_msg;
     bzero(&chat_msg, sizeof(chat_msg));
+    chat_msg.client_id = client->client_id;
     
     strncpy(chat_msg.username, client->username, MAX_USERNAME_LEN - 1);
     strncpy(chat_msg.message, message, MAX_BUFFER_SIZE - 1);
@@ -136,7 +133,7 @@ void* chat_receive_thread(void* arg) {
             break;
         }
         
-        if (strcmp(received_msg.username, client->username) != 0 && client->message_callback) {
+        if (received_msg.client_id != client->client_id && client->message_callback) {
             client->message_callback(received_msg.username, 
                                     received_msg.message, 
                                     received_msg.timestamp);
@@ -154,7 +151,7 @@ int chat_run(Client* client) {
     }
     
     char join_msg[MAX_BUFFER_SIZE];
-    snprintf(join_msg, sizeof(join_msg), "🟢 %s подключился к чату", client->username);
+    snprintf(join_msg, sizeof(join_msg), "%s подключился к чату", client->username);
     chat_send_message(client, join_msg);
     
     return 0;

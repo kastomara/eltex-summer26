@@ -3,7 +3,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
+#include <sys/time.h>
+#include <strings.h>
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
@@ -18,9 +21,10 @@
 #define MAX_USERNAME_LEN 32
 #define MAX_BUFFER_SIZE 1024
 #define BRDCS_PORT 40000
-#define BRDCS_ADDR "255.255.255.255"
+#define BRDCS_ADDR "192.168.64.255"
 
 typedef struct {
+    uint32_t client_id;
     char username[MAX_USERNAME_LEN];
     char message[MAX_BUFFER_SIZE];
     char timestamp[20];
@@ -31,7 +35,8 @@ typedef struct {
     struct sockaddr_in servaddr;
     struct sockaddr_in cliaddr;
     char username[MAX_USERNAME_LEN];
-    int running;
+    uint32_t client_id;
+    volatile sig_atomic_t running;
     pthread_t receive_thread;
     void (*message_callback)(const char*, const char*, const char*);
     void (*status_callback)(const char*);

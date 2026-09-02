@@ -18,29 +18,20 @@ void on_status(const char* message) {
 
 void signal_handler(int sig) {
     if (sig == SIGINT && global_client) {
-        printf("\n\nПолучен сигнал завершения...\n");
-        char leave_msg[MAX_BUFFER];
-        snprintf(leave_msg, sizeof(leave_msg), "🔴 %s вышел из чата", 
-                 global_client->username);
-        chat_send_message(global_client, leave_msg);
-        chat_set_running(global_client, 0);
+        global_client->running = 0;
     }
 }
 
 void input_loop(Client* client) {
     char sendline[MAX_BUFFER];
     
-    while (chat_is_running(client)) {
+    while (client->running) {
         if (fgets(sendline, MAX_BUFFER, stdin) == NULL) break;
         
         sendline[strcspn(sendline, "\n")] = '\0';
         
         if (strcmp(sendline, "quit") == 0) {
-            char leave_msg[MAX_BUFFER];
-            snprintf(leave_msg, sizeof(leave_msg), "🔴 %s вышел из чата", 
-                     client->username);
-            chat_send_message(client, leave_msg);
-            chat_set_running(client, 0);
+            client->running = 0;
             break;
         }
         
@@ -54,9 +45,15 @@ void input_loop(Client* client) {
             chat_send_message(client, start);
         }
         
-        printf("Введите сообщение: ");
-        fflush(stdout);
+        if (client->running) {
+            printf("Введите сообщение: ");
+            fflush(stdout);
+        }
+        
     }
+    char leave_msg[MAX_BUFFER];
+    snprintf(leave_msg, sizeof(leave_msg), "%s вышел из чата", client->username);
+    chat_send_message(client, leave_msg);
 }
 
 int main(int argc, char **argv) {
@@ -81,7 +78,7 @@ int main(int argc, char **argv) {
     
     Client* client = chat_create(username);
     if (!client) {
-        printf("❌ ОШИБКА: Не удалось создать клиент чата\n");
+        printf("ОШИБКА: Не удалось создать клиент чата\n");
         return EXIT_FAILURE;
     }
     
@@ -101,8 +98,9 @@ int main(int argc, char **argv) {
     
     input_loop(client);
     
-    chat_destroy(client);
+    Client* temp_client = global_client;
     global_client = NULL;
+    chat_destroy(temp_client);
     
     printf("\n===================================\n");
     printf("Чат завершен. До свидания!\n");
