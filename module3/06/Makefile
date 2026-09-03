@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -Iunity -Isrc
+CFLAGS = -Wall -Wextra -std=c11 -pthread -Isrc
 
 SRC_DIR = src
 BIN_DIR = bin

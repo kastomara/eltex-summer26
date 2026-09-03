@@ -73,10 +73,9 @@ int main() {
                         printf("Отключение: IP %s, Порт %d\n", inet_ntoa(s.address.sin_addr), ntohs(s.address.sin_port));
                         close(s.fds[i].fd);
                         
-                        // Сжимаем массив (переносим последний элемент на место удаленного)
                         s.fds[i] = s.fds[s.nfds - 1];
                         s.nfds--;
-                        i--; // Повторяем проверку для сдвинутого элемента
+                        i--;
                         current_size--;
                     } else {
                         // Рассылка сообщения остальным клиентам
