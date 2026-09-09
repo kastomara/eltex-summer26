@@ -9,35 +9,20 @@ UNITY_DIR = unity
 LIB_DIR = lib
 BIN_DIR = bin
 
-<<<<<<< HEAD
 SRCS = $(SRC_DIR)/pb_queue.c
 MAIN_SRC = main.c
 TEST_SRC = $(TEST_DIR)/test_pb_queue.c
 UNITY_SRC = $(UNITY_DIR)/unity.c
 HEADERS = $(SRC_DIR)/pb_queue.h $(SRC_DIR)/list.h
 LIB_SRCS = $(SRC_DIR)/list.c $(SRC_DIR)/pb_queue.c
-=======
-SRCS = $(SRC_DIR)/calc.c
-MAIN_SRC = main.c
-TEST_SRC = $(TEST_DIR)/test_calc.c
-UNITY_SRC = $(UNITY_DIR)/unity.c
-HEADERS = $(SRC_DIR)/calc.h $(SRC_DIR)/list.h
-LIB_SRCS = $(SRC_DIR)/list.c $(SRC_DIR)/calc.c
->>>>>>> a2f58e574dc0213e328b25463792a31c11913793
 
 TARGET = $(BIN_DIR)/app
 TEST_TARGET = $(BIN_DIR)/test_run
 DYNAMIC_LIB = $(LIB_DIR)/liblist.dylib
 
-<<<<<<< HEAD
 APP_OBJS = $(BIN_DIR)/main.o $(BIN_DIR)/pb_queue.o
 LIB_OBJS = $(BIN_DIR)/list.o $(BIN_DIR)/pb_queue.o
 TEST_OBJS = $(BIN_DIR)/test_pb_queue.o $(BIN_DIR)/pb_queue.o $(BIN_DIR)/unity.o
-=======
-APP_OBJS = $(BIN_DIR)/main.o $(BIN_DIR)/calc.o
-LIB_OBJS = $(BIN_DIR)/list.o $(BIN_DIR)/calc.o
-TEST_OBJS = $(BIN_DIR)/test_calc.o $(BIN_DIR)/calc.o $(BIN_DIR)/unity.o
->>>>>>> a2f58e574dc0213e328b25463792a31c11913793
 
 all: directories $(DYNAMIC_LIB) $(TARGET)
 
